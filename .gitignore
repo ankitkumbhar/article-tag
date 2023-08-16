@@ -22,3 +22,6 @@ go.work
 
 # db volume
 data/
+
+# unit test coverage
+coverage.txt

@@ -7,14 +7,14 @@ import (
 )
 
 type Application struct {
-	// db    *dynamodb.Client
+	db    *dynamodb.Client
 	model model.Models
 }
 
 // New
-func New(db *dynamodb.Client) *Application {
+func New(db *dynamodb.Client, models *model.Models) *Application {
 	return &Application{
-		// db:    db,
-		model: model.NewModel(db),
+		db:    db,
+		model: *models,
 	}
 }

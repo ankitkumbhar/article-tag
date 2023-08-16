@@ -8,14 +8,17 @@ import (
 
 type UserTagStore interface {
 	Store(ctx context.Context, item *UserTag) error
-	Get(ctx context.Context) ([]*UserTag, error)
+	Get(ctx context.Context, item *UserTag) ([]string, error)
+	Delete(ctx context.Context, item *UserTag) error
+	GetPopularTags(ctx context.Context, item *UserTag) ([]string, error)
 }
 
 type UserTag struct {
-	SK   string
-	PU   string
-	Tag  string
-	Tags []string
+	Username    string
+	SK          string
+	Publication string
+	Tag         string
+	Tags        []string
 }
 
 type Models struct {

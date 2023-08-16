@@ -10,6 +10,9 @@ func InitRouter(app *handler.Application) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Post("/tag", app.Store())
+	r.Get("/tag/{username}/{publication}", app.Get())
+	r.Delete("/tag", app.Delete())
+	r.Get("/tag/popular", app.PopularTag())
 
 	return r
 }

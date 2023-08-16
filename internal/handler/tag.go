@@ -1,23 +1,267 @@
 package handler
 
 import (
+	"article-tag/internal/model"
 	"article-tag/internal/response"
-	"fmt"
+	"article-tag/internal/types"
+	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
+
+	"github.com/go-chi/chi"
 )
 
 func (app *Application) Store() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		var req types.StoreTagRequest
 
-		err := app.model.Tag.Store(ctx, nil)
+		// validate request
+		err := app.validateStoreRequest(w, r, &req)
 		if err != nil {
-			fmt.Println("error storing item : ", err)
-			response.InternalServerError(w, "error while storing item from database")
+			log.Println("error storing item : ", err)
 
 			return
 		}
 
+		// store follow tag
+		for _, val := range req.Tags {
+			item := model.UserTag{
+				Username:    req.Username,
+				Publication: req.Publication,
+				Tag:         val,
+			}
+
+			err = app.model.Tag.Store(ctx, &item)
+			if err != nil {
+				log.Println("error storing item : ", err)
+				response.InternalServerError(w, "error while storing user tag")
+
+				return
+			}
+		}
+
 		response.Created(w, "")
 	}
+}
+
+func (app *Application) Get() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		var req types.GetTagRequest
+
+		// validate request
+		err := app.validateGetRequest(w, r, &req)
+		if err != nil {
+			log.Println("error storing item : ", err)
+
+			return
+		}
+
+		item := model.UserTag{
+			Username:    req.Username,
+			Publication: req.Publication,
+		}
+
+		// fetch tags using username and publication
+		userTag, err := app.model.Tag.Get(ctx, &item)
+		if err != nil {
+			log.Println("error fetching item : ", err)
+			response.InternalServerError(w, "error while fetching user tags")
+
+			return
+		}
+
+		// prepare response
+		resp := types.GetTagResponse{Tags: userTag}
+
+		response.Success(w, resp, "")
+	}
+}
+
+func (app *Application) Delete() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		var req types.GetTagRequest
+
+		// validate request
+		err := app.validateDeleteRequest(w, r, &req)
+		if err != nil {
+			log.Println("error storing item : ", err)
+
+			return
+		}
+
+		for _, val := range req.Tags {
+			item := model.UserTag{
+				Username:    req.Username,
+				Publication: req.Publication,
+				Tag:         val,
+			}
+
+			err = app.model.Tag.Delete(ctx, &item)
+			if err != nil {
+				log.Println("error deleting item : ", err)
+				response.InternalServerError(w, "error while deleting user followed tags")
+
+				return
+			}
+		}
+
+		response.Success(w, nil, "")
+	}
+}
+
+func (app *Application) PopularTag() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		var req types.GetPopularTagRequest
+
+		// validate request
+		err := app.validateGetPopularTagRequest(w, r, &req)
+		if err != nil {
+			log.Println("error storing item : ", err)
+
+			return
+		}
+
+		item := model.UserTag{
+			Username:    req.Username,
+			Publication: req.Publication,
+		}
+
+		userTags, err := app.model.Tag.GetPopularTags(ctx, &item)
+		if err != nil {
+			log.Println("error while fetching popular tags for user", err)
+			response.InternalServerError(w, "error while fetching popular tags")
+
+			return
+		}
+
+		response.Success(w, userTags, "")
+	}
+}
+
+func (app *Application) validateStoreRequest(w http.ResponseWriter, r *http.Request, req *types.StoreTagRequest) error {
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		log.Println("error decoding request body : ", err)
+		response.BadRequest(w, "invalid request")
+
+		return err
+	}
+
+	// TODO : use validator to validate request
+
+	if req.Username == "" {
+		err = errors.New("username field is required")
+		response.BadRequest(w, "username field is required")
+
+		return err
+	}
+
+	if req.Publication == "" {
+		err = errors.New("publication field is required")
+		response.BadRequest(w, "publication field is required")
+
+		return err
+	}
+
+	if len(req.Tags) == 0 {
+		err = errors.New("atleast one tag is required")
+		response.BadRequest(w, "atleast one tag is required")
+
+		return err
+	}
+
+	return nil
+}
+
+func (app *Application) validateGetRequest(w http.ResponseWriter, r *http.Request, req *types.GetTagRequest) error {
+	var err error
+	// req.Username = r.URL.Query().Get("username")
+	// req.Publication = r.URL.Query().Get("publication")
+
+	req.Username = chi.URLParam(r, "username")
+	req.Publication = chi.URLParam(r, "publication")
+
+	// chi.URLParam(r, "article_id")
+
+	// TODO : use validator to validate request
+
+	if req.Username == "" {
+		err = errors.New("username field is required")
+		response.BadRequest(w, "username field is required")
+
+		return err
+	}
+
+	if req.Publication == "" {
+		err = errors.New("publication field is required")
+		response.BadRequest(w, "publication field is required")
+
+		return err
+	}
+
+	return nil
+}
+
+func (app *Application) validateDeleteRequest(w http.ResponseWriter, r *http.Request, req *types.GetTagRequest) error {
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		log.Println("error decoding request body : ", err)
+		response.BadRequest(w, "invalid request")
+
+		return err
+	}
+
+	// TODO : use validator to validate request
+
+	if req.Username == "" {
+		err = errors.New("username field is required")
+		response.BadRequest(w, "username field is required")
+
+		return err
+	}
+
+	if req.Publication == "" {
+		err = errors.New("publication field is required")
+		response.BadRequest(w, "publication field is required")
+
+		return err
+	}
+
+	if len(req.Tags) == 0 {
+		err = errors.New("atleast one tag is required")
+		response.BadRequest(w, "atleast one tag is required")
+
+		return err
+	}
+
+	return nil
+}
+
+func (app *Application) validateGetPopularTagRequest(w http.ResponseWriter, r *http.Request, req *types.GetPopularTagRequest) error {
+	var err error
+	req.Username = r.URL.Query().Get("username")
+	req.Publication = r.URL.Query().Get("publication")
+
+	// TODO : use validator to validate request
+
+	if req.Username == "" {
+		err = errors.New("username field is required")
+		response.BadRequest(w, "username field is required")
+
+		return err
+	}
+
+	if req.Publication == "" {
+		err = errors.New("publication field is required")
+		response.BadRequest(w, "publication field is required")
+
+		return err
+	}
+
+	return nil
 }

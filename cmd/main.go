@@ -3,7 +3,10 @@ package main
 import (
 	"article-tag/internal/database"
 	"article-tag/internal/handler"
+	"article-tag/internal/model"
 	"article-tag/internal/routes"
+	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -17,11 +20,19 @@ func init() {
 		panic(err)
 	}
 
-	app = handler.New(db)
+	models := model.NewModel(db)
+
+	app = handler.New(db, &models)
 }
 
 func main() {
 	r := routes.InitRouter(app)
 
-	http.ListenAndServe(":8080", r)
+	port := "8080"
+
+	log.Default().Println("starting server on port :", port)
+
+	if err := http.ListenAndServe(fmt.Sprintf(":%v", port), r); err != nil {
+		log.Fatalf("error starting server on port : %v", port)
+	}
 }
