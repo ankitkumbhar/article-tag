@@ -8,8 +8,11 @@ GO_TEST_PKG=$(shell go list ./... | grep -v docs | grep -v cmd | grep -v interna
 GO_COVER_PKG=$(shell go list ./... | grep -v docs | grep -v cmd | grep -v internal/mocks | grep -v internal/response | paste -sd "," -)
 
 ## Compile and execute code
-run:
+local-run:
 	go run cmd/main.go
+
+run:
+	docker-compose up -d
 
 mod:
 	go mod tidy && go mod vendor

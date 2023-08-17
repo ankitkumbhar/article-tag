@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  app:
+    container_name: artile-follow-tag-app
+    build: .
+    environment:
+      - AWS_ACCESS_KEY=${ACCESS_KEY}
+      - AWS_SECRET_KEY=${SECRET_KEY}
+      - AWS_REGION=${REGION}
+    ports:
+      - "8080:8080"
+    networks:
+      - article-follow-tag-network 
+    depends_on:
+      - localstack
+
+  localstack:
+    container_name: article-follow-tag-db
+    image: localstack/localstack:1.4
+    ports:
+      - "4566:4566"
+    environment:
+      - DEFAULT_REGION=ap-southeast-1
+      - SERVICES=dynamodb
+      - DEBUG=1
+      - DATA_DIR=/var/lib/localstack
+    volumes:
+      - "./data:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - article-follow-tag-network
+
+networks:
+  article-follow-tag-network:
+    driver: bridge

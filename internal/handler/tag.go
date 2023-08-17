@@ -6,6 +6,7 @@ import (
 	"article-tag/internal/types"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -23,6 +24,18 @@ func (app *Application) Store() http.HandlerFunc {
 			log.Println("error storing item : ", err)
 
 			return
+		}
+
+		// check table exists
+		err = app.model.Tag.DescribeTable(ctx)
+		if err != nil {
+			err = app.model.Tag.CreateTable(ctx)
+			if err != nil {
+				fmt.Println("error creating table : ", err)
+				response.InternalServerError(w, "error while creating table")
+
+				return
+			}
 		}
 
 		// store follow tag

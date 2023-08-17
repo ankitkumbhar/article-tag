@@ -36,6 +36,7 @@ func Test_Store(t *testing.T) {
 			args: args{req: types.StoreTagRequest{Username: "Test", Publication: "TS", Tags: []string{"tag100"}}},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
+				tagStoreMock.EXPECT().DescribeTable(mock.Anything).Return(nil)
 				tagStoreMock.EXPECT().Store(mock.Anything, mock.Anything).Return(nil)
 
 				m := model.Models{
@@ -81,6 +82,7 @@ func Test_Store(t *testing.T) {
 			args: args{req: types.StoreTagRequest{Username: "Test", Publication: "TS", Tags: []string{"tag101"}}},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
+				tagStoreMock.EXPECT().DescribeTable(mock.Anything).Return(nil)
 				tagStoreMock.EXPECT().Store(mock.Anything, mock.Anything).Return(errors.New("db error"))
 
 				m := model.Models{Tag: tagStoreMock}

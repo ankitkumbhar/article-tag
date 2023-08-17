@@ -22,6 +22,48 @@ func (_m *UserTagStore) EXPECT() *UserTagStore_Expecter {
 	return &UserTagStore_Expecter{mock: &_m.Mock}
 }
 
+// CreateTable provides a mock function with given fields: ctx
+func (_m *UserTagStore) CreateTable(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UserTagStore_CreateTable_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateTable'
+type UserTagStore_CreateTable_Call struct {
+	*mock.Call
+}
+
+// CreateTable is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *UserTagStore_Expecter) CreateTable(ctx interface{}) *UserTagStore_CreateTable_Call {
+	return &UserTagStore_CreateTable_Call{Call: _e.mock.On("CreateTable", ctx)}
+}
+
+func (_c *UserTagStore_CreateTable_Call) Run(run func(ctx context.Context)) *UserTagStore_CreateTable_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *UserTagStore_CreateTable_Call) Return(_a0 error) *UserTagStore_CreateTable_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *UserTagStore_CreateTable_Call) RunAndReturn(run func(context.Context) error) *UserTagStore_CreateTable_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Delete provides a mock function with given fields: ctx, item
 func (_m *UserTagStore) Delete(ctx context.Context, item *model.UserTag) error {
 	ret := _m.Called(ctx, item)
@@ -61,6 +103,48 @@ func (_c *UserTagStore_Delete_Call) Return(_a0 error) *UserTagStore_Delete_Call 
 }
 
 func (_c *UserTagStore_Delete_Call) RunAndReturn(run func(context.Context, *model.UserTag) error) *UserTagStore_Delete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DescribeTable provides a mock function with given fields: ctx
+func (_m *UserTagStore) DescribeTable(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UserTagStore_DescribeTable_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DescribeTable'
+type UserTagStore_DescribeTable_Call struct {
+	*mock.Call
+}
+
+// DescribeTable is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *UserTagStore_Expecter) DescribeTable(ctx interface{}) *UserTagStore_DescribeTable_Call {
+	return &UserTagStore_DescribeTable_Call{Call: _e.mock.On("DescribeTable", ctx)}
+}
+
+func (_c *UserTagStore_DescribeTable_Call) Run(run func(ctx context.Context)) *UserTagStore_DescribeTable_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *UserTagStore_DescribeTable_Call) Return(_a0 error) *UserTagStore_DescribeTable_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *UserTagStore_DescribeTable_Call) RunAndReturn(run func(context.Context) error) *UserTagStore_DescribeTable_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -7,6 +7,8 @@ import (
 )
 
 type UserTagStore interface {
+	DescribeTable(ctx context.Context) error
+	CreateTable(ctx context.Context) error
 	Store(ctx context.Context, item *UserTag) error
 	Get(ctx context.Context, item *UserTag) ([]string, error)
 	Delete(ctx context.Context, item *UserTag) error
@@ -27,6 +29,6 @@ type Models struct {
 
 func NewModel(db *dynamodb.Client) Models {
 	return Models{
-		Tag: &tag{db: db},
+		Tag: NewTag(db),
 	}
 }
