@@ -83,7 +83,7 @@ func (app *Application) Get() http.HandlerFunc {
 func (app *Application) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		var req types.GetTagRequest
+		var req types.DeleteTagRequest
 
 		// validate request
 		err := app.validateDeleteRequest(w, r, &req)
@@ -180,13 +180,10 @@ func (app *Application) validateStoreRequest(w http.ResponseWriter, r *http.Requ
 
 func (app *Application) validateGetRequest(w http.ResponseWriter, r *http.Request, req *types.GetTagRequest) error {
 	var err error
-	// req.Username = r.URL.Query().Get("username")
-	// req.Publication = r.URL.Query().Get("publication")
 
+	// fetch params from urlParams
 	req.Username = chi.URLParam(r, "username")
 	req.Publication = chi.URLParam(r, "publication")
-
-	// chi.URLParam(r, "article_id")
 
 	// TODO : use validator to validate request
 
@@ -207,7 +204,7 @@ func (app *Application) validateGetRequest(w http.ResponseWriter, r *http.Reques
 	return nil
 }
 
-func (app *Application) validateDeleteRequest(w http.ResponseWriter, r *http.Request, req *types.GetTagRequest) error {
+func (app *Application) validateDeleteRequest(w http.ResponseWriter, r *http.Request, req *types.DeleteTagRequest) error {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		log.Println("error decoding request body : ", err)
@@ -244,8 +241,10 @@ func (app *Application) validateDeleteRequest(w http.ResponseWriter, r *http.Req
 
 func (app *Application) validateGetPopularTagRequest(w http.ResponseWriter, r *http.Request, req *types.GetPopularTagRequest) error {
 	var err error
-	req.Username = r.URL.Query().Get("username")
-	req.Publication = r.URL.Query().Get("publication")
+
+	// fetch params from urlParams
+	req.Username = chi.URLParam(r, "username")
+	req.Publication = chi.URLParam(r, "publication")
 
 	// TODO : use validator to validate request
 

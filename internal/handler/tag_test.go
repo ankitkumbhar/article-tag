@@ -33,7 +33,7 @@ func Test_Store(t *testing.T) {
 	}{
 		{
 			name: "success",
-			args: args{req: types.StoreTagRequest{Username: "Ankit", Publication: "AK", Tags: []string{"tag100"}}},
+			args: args{req: types.StoreTagRequest{Username: "Test", Publication: "TS", Tags: []string{"tag100"}}},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
 				tagStoreMock.EXPECT().Store(mock.Anything, mock.Anything).Return(nil)
@@ -44,12 +44,11 @@ func Test_Store(t *testing.T) {
 
 				return handler.New(nil, &m)
 			},
-			// wantResp:     handler.ArticleResponse{ID: 1},
 			wantRespBody: &response.Body{Status: http.StatusCreated, Message: ""},
 		},
 		{
 			name: "should fail when invalid request is passed - empty username",
-			args: args{req: types.StoreTagRequest{Username: "", Publication: "AK", Tags: []string{"tag100"}}},
+			args: args{req: types.StoreTagRequest{Username: "", Publication: "TS", Tags: []string{"tag100"}}},
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
@@ -59,7 +58,7 @@ func Test_Store(t *testing.T) {
 		},
 		{
 			name: "should fail when invalid request is passed - empty publication",
-			args: args{req: types.StoreTagRequest{Username: "Ankit", Publication: "", Tags: []string{"tag100"}}},
+			args: args{req: types.StoreTagRequest{Username: "Test", Publication: "", Tags: []string{"tag100"}}},
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
@@ -69,7 +68,7 @@ func Test_Store(t *testing.T) {
 		},
 		{
 			name: "should fail when invalid request is passed - empty tags",
-			args: args{req: types.StoreTagRequest{Username: "Ankit", Publication: "AK", Tags: []string{}}},
+			args: args{req: types.StoreTagRequest{Username: "Test", Publication: "TS", Tags: []string{}}},
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
@@ -79,7 +78,7 @@ func Test_Store(t *testing.T) {
 		},
 		{
 			name: "should fail when got error while storing user tags",
-			args: args{req: types.StoreTagRequest{Username: "Ankit", Publication: "AK", Tags: []string{"tag100"}}},
+			args: args{req: types.StoreTagRequest{Username: "Test", Publication: "TS", Tags: []string{"tag101"}}},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
 				tagStoreMock.EXPECT().Store(mock.Anything, mock.Anything).Return(errors.New("db error"))
@@ -97,7 +96,9 @@ func Test_Store(t *testing.T) {
 			app := tt.mockDB()
 
 			handlerFunc := app.Store()
-			got, gotErr := callEndpoint(t, &tt.args.req, handlerFunc, nil)
+
+			rawReq, _ := json.Marshal(tt.args.req)
+			got, gotErr := callEndpoint(t, rawReq, handlerFunc, nil)
 
 			if tt.wantRespBody != nil {
 				assert.Nil(t, gotErr)
@@ -122,7 +123,7 @@ func Test_Get(t *testing.T) {
 	}{
 		{
 			name: "success",
-			args: args{urlParams: map[string]string{"username": "Ankit", "publication": "AK"}},
+			args: args{urlParams: map[string]string{"username": "Test", "publication": "TS"}},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
 				tagStoreMock.EXPECT().Get(mock.Anything, mock.Anything).Return([]string{}, nil)
@@ -133,12 +134,11 @@ func Test_Get(t *testing.T) {
 
 				return handler.New(nil, &m)
 			},
-			// wantResp:     handler.ArticleResponse{ID: 1},
 			wantRespBody: &response.Body{Status: http.StatusOK, Message: ""},
 		},
 		{
 			name: "should fail when invalid request is passed - empty username",
-			args: args{urlParams: map[string]string{"username": "", "publication": "AK"}},
+			args: args{urlParams: map[string]string{"username": "", "publication": "TS"}},
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
@@ -148,7 +148,7 @@ func Test_Get(t *testing.T) {
 		},
 		{
 			name: "should fail when invalid request is passed - empty publication",
-			args: args{urlParams: map[string]string{"username": "Ankit", "publication": ""}},
+			args: args{urlParams: map[string]string{"username": "Test", "publication": ""}},
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
@@ -158,7 +158,7 @@ func Test_Get(t *testing.T) {
 		},
 		{
 			name: "should fail when got error while storing user tags",
-			args: args{urlParams: map[string]string{"username": "Ankit", "publication": "AK"}},
+			args: args{urlParams: map[string]string{"username": "Test", "publication": "TS"}},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
 				tagStoreMock.EXPECT().Get(mock.Anything, mock.Anything).Return([]string{}, errors.New("db error"))
@@ -187,11 +187,171 @@ func Test_Get(t *testing.T) {
 	}
 }
 
-// callEndpoint creates a request and make a http call
-func callEndpoint(t *testing.T, req *types.StoreTagRequest, handlerFunc http.HandlerFunc, urlParams map[string]string) (*response.Body, error) {
-	w := httptest.NewRecorder()
+func Test_Delete(t *testing.T) {
+	type args struct {
+		req types.DeleteTagRequest
+	}
 
-	rawReq, _ := json.Marshal(req)
+	tests := []struct {
+		name         string
+		args         args
+		mockDB       func() *handler.Application
+		wantResp     string
+		wantRespBody *response.Body
+	}{
+		{
+			name: "success",
+			args: args{types.DeleteTagRequest{Username: "Test", Publication: "TS", Tags: []string{"tag101"}}},
+			mockDB: func() *handler.Application {
+				tagStoreMock := mocks.NewUserTagStore(t)
+				tagStoreMock.EXPECT().Delete(mock.Anything, mock.Anything).Return(nil)
+
+				m := model.Models{
+					Tag: tagStoreMock,
+				}
+
+				return handler.New(nil, &m)
+			},
+			wantRespBody: &response.Body{Status: http.StatusOK, Message: ""},
+		},
+		{
+			name: "should fail when invalid request is passed - empty username",
+			args: args{types.DeleteTagRequest{Username: "", Publication: "TS", Tags: []string{"tag101"}}},
+			mockDB: func() *handler.Application {
+				m := model.Models{}
+
+				return handler.New(nil, &m)
+			},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "username field is required"},
+		},
+		{
+			name: "should fail when invalid request is passed - empty publication",
+			args: args{types.DeleteTagRequest{Username: "Test", Publication: "", Tags: []string{"tag101"}}},
+			mockDB: func() *handler.Application {
+				m := model.Models{}
+
+				return handler.New(nil, &m)
+			},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "publication field is required"},
+		},
+		{
+			name: "Should fail when receive error from database while deleting userTag",
+			args: args{types.DeleteTagRequest{Username: "Test", Publication: "TS", Tags: []string{"tag101"}}},
+			mockDB: func() *handler.Application {
+				tagStoreMock := mocks.NewUserTagStore(t)
+				tagStoreMock.EXPECT().Delete(mock.Anything, mock.Anything).Return(errors.New("db error"))
+
+				m := model.Models{
+					Tag: tagStoreMock,
+				}
+
+				return handler.New(nil, &m)
+			},
+			wantRespBody: &response.Body{Status: http.StatusInternalServerError, Message: "error while deleting user followed tags"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			app := tt.mockDB()
+
+			handlerFunc := app.Delete()
+
+			rawReq, _ := json.Marshal(tt.args.req)
+
+			got, gotErr := callEndpoint(t, rawReq, handlerFunc, nil)
+			if tt.wantRespBody != nil {
+				assert.Nil(t, gotErr)
+				assert.Equal(t, got.Status, tt.wantRespBody.Status)
+				assert.Equal(t, got.Message, tt.wantRespBody.Message)
+			}
+		})
+	}
+}
+
+func Test_PopularTags(t *testing.T) {
+	type args struct {
+		urlParams map[string]string
+	}
+
+	tests := []struct {
+		name         string
+		args         args
+		mockDB       func() *handler.Application
+		wantResp     string
+		wantRespBody *response.Body
+	}{
+		{
+			name: "success",
+			args: args{urlParams: map[string]string{"username": "Test", "publication": "TS"}},
+			mockDB: func() *handler.Application {
+				tagStoreMock := mocks.NewUserTagStore(t)
+				tagStoreMock.EXPECT().GetPopularTags(mock.Anything, mock.Anything).Return([]string{"tag101"}, nil)
+
+				m := model.Models{
+					Tag: tagStoreMock,
+				}
+
+				return handler.New(nil, &m)
+			},
+			wantRespBody: &response.Body{Status: http.StatusOK, Message: ""},
+		},
+		{
+			name: "should fail when invalid request is passed - empty username",
+			args: args{urlParams: map[string]string{"username": "", "publication": "TS"}},
+			mockDB: func() *handler.Application {
+				m := model.Models{}
+
+				return handler.New(nil, &m)
+			},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "username field is required"},
+		},
+		{
+			name: "should fail when invalid request is passed - empty publication",
+			args: args{urlParams: map[string]string{"username": "Test", "publication": ""}},
+			mockDB: func() *handler.Application {
+				m := model.Models{}
+
+				return handler.New(nil, &m)
+			},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "publication field is required"},
+		},
+		{
+			name: "Should fail when receive error from database while fetching popular userTag",
+			args: args{urlParams: map[string]string{"username": "Test", "publication": "TS"}},
+			mockDB: func() *handler.Application {
+				tagStoreMock := mocks.NewUserTagStore(t)
+				tagStoreMock.EXPECT().GetPopularTags(mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
+
+				m := model.Models{
+					Tag: tagStoreMock,
+				}
+
+				return handler.New(nil, &m)
+			},
+			wantRespBody: &response.Body{Status: http.StatusInternalServerError, Message: "error while fetching popular tags"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			app := tt.mockDB()
+
+			handlerFunc := app.PopularTag()
+
+			got, gotErr := callEndpoint(t, nil, handlerFunc, tt.args.urlParams)
+			if tt.wantRespBody != nil {
+				assert.Nil(t, gotErr)
+				assert.Equal(t, got.Status, tt.wantRespBody.Status)
+				assert.Equal(t, got.Message, tt.wantRespBody.Message)
+			}
+		})
+	}
+}
+
+// callEndpoint creates a request and make a http call
+func callEndpoint(t *testing.T, rawReq []byte, handlerFunc http.HandlerFunc, urlParams map[string]string) (*response.Body, error) {
+	w := httptest.NewRecorder()
 
 	// create a request
 	r, err := http.NewRequest(mock.Anything, "/tag", bytes.NewBuffer(rawReq))
