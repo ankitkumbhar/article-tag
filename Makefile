@@ -14,6 +14,9 @@ local-run:
 run:
 	docker-compose up -d
 
+stop:
+	docker-compose stop
+
 mod:
 	go mod tidy && go mod vendor
 
@@ -22,7 +25,6 @@ mocks:
 	mockery --all --case underscore --with-expecter --exported --srcpkg ./internal/model --output ./internal/mocks
 
 unit-test:
-	echo $(GO_TEST_PKG);
 	go test ${GO_TEST_PKG} -mod=readonly -cover -covermode=${COVER_MODE} -coverprofile=${COVER_PROFILE} -coverpkg=${GO_COVER_PKG}
 
 cover:

@@ -14,7 +14,7 @@ import (
 func InitDB() (*dynamodb.Client, error) {
 	region := os.Getenv("AWS_REGION")
 
-	awsEndpoint := "http://localhost:8000"
+	awsEndpoint := "http://localstack:4566"
 
 	customResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
 		if awsEndpoint != "" {

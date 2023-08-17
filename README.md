@@ -7,20 +7,28 @@
 ## Setup process
 
 ### Running Application
-To build and run application locally:
+To build and run container:
 
 ```shell
 make run
+```
+
+To stop running containers:
+```shell
+make stop
 ```
 
 ### Testing
 Used `testing` package that is built-in in Golang. To run unit tests run following command
 
 ```shell
-go test -v ./... -cover -coverprofile=coverage.txt
+make unit-test
 ```
 
 To check the coverage run
 ```shell
-go tool cover -func coverage.txt
+make cover
 ```
+
+### Coverage:
+![Coverage](./docs/coverage.png "Coverage")
