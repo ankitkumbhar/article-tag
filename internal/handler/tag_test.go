@@ -36,7 +36,7 @@ func Test_Store(t *testing.T) {
 			name: "success",
 			args: args{
 				req:       types.StoreTagRequest{Username: "Test", Tags: []string{"tag100"}},
-				urlParams: map[string]string{"publication": "TS"},
+				urlParams: map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
@@ -55,7 +55,7 @@ func Test_Store(t *testing.T) {
 			name: "should fail when invalid request is passed - empty username",
 			args: args{
 				req:       types.StoreTagRequest{Username: "", Tags: []string{"tag100"}},
-				urlParams: map[string]string{"publication": "TS"},
+				urlParams: map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
 				m := model.Models{}
@@ -81,7 +81,7 @@ func Test_Store(t *testing.T) {
 			name: "should fail when invalid request is passed - empty tags",
 			args: args{
 				req:       types.StoreTagRequest{Username: "Test", Tags: []string{}},
-				urlParams: map[string]string{"publication": "TS"},
+				urlParams: map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
 				m := model.Models{}
@@ -94,7 +94,7 @@ func Test_Store(t *testing.T) {
 			name: "should fail when got error while storing user tags",
 			args: args{
 				req:       types.StoreTagRequest{Username: "Test", Tags: []string{"tag101"}},
-				urlParams: map[string]string{"publication": "TS"},
+				urlParams: map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
@@ -143,7 +143,7 @@ func Test_Get(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				urlParams:   map[string]string{"publication": "TS"},
+				urlParams:   map[string]string{"publication": "AK"},
 				queryParams: map[string]string{"username": "Test"},
 			},
 			mockDB: func() *handler.Application {
@@ -161,7 +161,7 @@ func Test_Get(t *testing.T) {
 		{
 			name: "should fail when invalid request is passed - empty username",
 			args: args{
-				urlParams:   map[string]string{"publication": "TS"},
+				urlParams:   map[string]string{"publication": "AK"},
 				queryParams: nil,
 			},
 			mockDB: func() *handler.Application {
@@ -187,7 +187,7 @@ func Test_Get(t *testing.T) {
 		{
 			name: "should fail when got error while storing user tags",
 			args: args{
-				urlParams:   map[string]string{"publication": "TS"},
+				urlParams:   map[string]string{"publication": "AK"},
 				queryParams: map[string]string{"username": "Test"},
 			},
 			mockDB: func() *handler.Application {
@@ -235,7 +235,7 @@ func Test_Delete(t *testing.T) {
 			name: "success",
 			args: args{
 				types.DeleteTagRequest{Username: "Test", Tags: []string{"tag101"}},
-				map[string]string{"publication": "TS"},
+				map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
@@ -253,7 +253,7 @@ func Test_Delete(t *testing.T) {
 			name: "should fail when invalid request is passed - empty username",
 			args: args{
 				types.DeleteTagRequest{Username: "", Tags: []string{"tag101"}},
-				map[string]string{"publication": "TS"},
+				map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
 				m := model.Models{}
@@ -279,7 +279,7 @@ func Test_Delete(t *testing.T) {
 			name: "Should fail when receive error from database while deleting userTag",
 			args: args{
 				types.DeleteTagRequest{Username: "Test", Tags: []string{"tag101"}},
-				map[string]string{"publication": "TS"},
+				map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
@@ -329,7 +329,7 @@ func Test_PopularTags(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				urlParams:   map[string]string{"publication": "TS"},
+				urlParams:   map[string]string{"publication": "AK"},
 				queryParams: map[string]string{"username": "Test"},
 			},
 			mockDB: func() *handler.Application {
@@ -347,7 +347,7 @@ func Test_PopularTags(t *testing.T) {
 		{
 			name: "should fail when invalid request is passed - empty username",
 			args: args{
-				urlParams:   map[string]string{"publication": "TS"},
+				urlParams:   map[string]string{"publication": "AK"},
 				queryParams: map[string]string{"username": ""},
 			},
 			mockDB: func() *handler.Application {
@@ -373,7 +373,7 @@ func Test_PopularTags(t *testing.T) {
 		{
 			name: "Should fail when receive error from database while fetching popular userTag",
 			args: args{
-				urlParams:   map[string]string{"publication": "TS"},
+				urlParams:   map[string]string{"publication": "AK"},
 				queryParams: map[string]string{"username": "Test"},
 			},
 			mockDB: func() *handler.Application {

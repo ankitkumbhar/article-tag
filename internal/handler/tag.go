@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"article-tag/internal/constant"
 	"article-tag/internal/model"
 	"article-tag/internal/response"
 	"article-tag/internal/types"
@@ -183,6 +184,22 @@ func (app *Application) validateStoreRequest(w http.ResponseWriter, r *http.Requ
 		return err
 	}
 
+	var isValidPublication bool
+	for _, v := range constant.AllowdedPublications {
+		if req.Publication == v {
+			isValidPublication = true
+
+			break
+		}
+	}
+
+	if !isValidPublication {
+		err = errors.New("invalid publication passed")
+		response.BadRequest(w, "invalid publication passed, please pass valid publication")
+
+		return err
+	}
+
 	if len(req.Tags) == 0 {
 		err = errors.New("atleast one tag is required")
 		response.BadRequest(w, "atleast one tag is required")
@@ -245,6 +262,22 @@ func (app *Application) validateDeleteRequest(w http.ResponseWriter, r *http.Req
 	if req.Publication == "" {
 		err = errors.New("publication field is required")
 		response.BadRequest(w, "publication field is required")
+
+		return err
+	}
+
+	var isValidPublication bool
+	for _, v := range constant.AllowdedPublications {
+		if req.Publication == v {
+			isValidPublication = true
+
+			break
+		}
+	}
+
+	if !isValidPublication {
+		err = errors.New("invalid publication passed")
+		response.BadRequest(w, "invalid publication passed, please pass valid publication")
 
 		return err
 	}
