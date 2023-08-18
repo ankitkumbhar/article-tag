@@ -106,11 +106,6 @@ func (app *Application) Delete() http.HandlerFunc {
 			return
 		}
 
-		// a, _ := json.Marshal(req)
-		// fmt.Println("===============================aadel", string(a))
-
-		// return
-
 		for _, val := range req.Tags {
 			item := model.UserTag{
 				Username:    req.Username,
@@ -143,11 +138,6 @@ func (app *Application) PopularTag() http.HandlerFunc {
 
 			return
 		}
-
-		// a, _ := json.Marshal(req)
-		// fmt.Println("===============================aadel", string(a))
-
-		// return
 
 		item := model.UserTag{
 			Username:    req.Username,
