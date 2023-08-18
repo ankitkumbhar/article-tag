@@ -106,6 +106,11 @@ func (app *Application) Delete() http.HandlerFunc {
 			return
 		}
 
+		// a, _ := json.Marshal(req)
+		// fmt.Println("===============================aadel", string(a))
+
+		// return
+
 		for _, val := range req.Tags {
 			item := model.UserTag{
 				Username:    req.Username,
@@ -139,6 +144,11 @@ func (app *Application) PopularTag() http.HandlerFunc {
 			return
 		}
 
+		// a, _ := json.Marshal(req)
+		// fmt.Println("===============================aadel", string(a))
+
+		// return
+
 		item := model.UserTag{
 			Username:    req.Username,
 			Publication: req.Publication,
@@ -164,6 +174,8 @@ func (app *Application) validateStoreRequest(w http.ResponseWriter, r *http.Requ
 
 		return err
 	}
+
+	req.Publication = chi.URLParam(r, "publication")
 
 	// TODO : use validator to validate request
 
@@ -194,8 +206,10 @@ func (app *Application) validateStoreRequest(w http.ResponseWriter, r *http.Requ
 func (app *Application) validateGetRequest(w http.ResponseWriter, r *http.Request, req *types.GetTagRequest) error {
 	var err error
 
+	// fetch username from queryParams
+	req.Username = r.URL.Query().Get("username")
+
 	// fetch params from urlParams
-	req.Username = chi.URLParam(r, "username")
 	req.Publication = chi.URLParam(r, "publication")
 
 	// TODO : use validator to validate request
@@ -226,6 +240,9 @@ func (app *Application) validateDeleteRequest(w http.ResponseWriter, r *http.Req
 		return err
 	}
 
+	// fetch params from urlParams
+	req.Publication = chi.URLParam(r, "publication")
+
 	// TODO : use validator to validate request
 
 	if req.Username == "" {
@@ -255,8 +272,10 @@ func (app *Application) validateDeleteRequest(w http.ResponseWriter, r *http.Req
 func (app *Application) validateGetPopularTagRequest(w http.ResponseWriter, r *http.Request, req *types.GetPopularTagRequest) error {
 	var err error
 
+	// fetch username from queryParams
+	req.Username = r.URL.Query().Get("username")
+
 	// fetch params from urlParams
-	req.Username = chi.URLParam(r, "username")
 	req.Publication = chi.URLParam(r, "publication")
 
 	// TODO : use validator to validate request

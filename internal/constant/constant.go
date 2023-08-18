@@ -1,5 +1,6 @@
 package constant
 
 const (
-	PopularTagCount = 3
+	PopularTagCount = 0
+	PopularTagLimit = 50
 )

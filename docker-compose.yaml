@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   app:
-    container_name: artile-follow-tag-app
+    container_name: article-follow-tag-app
     build: .
     environment:
       - AWS_ACCESS_KEY=${ACCESS_KEY}

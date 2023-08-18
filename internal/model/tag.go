@@ -116,32 +116,37 @@ func (t *tag) Store(ctx context.Context, item *UserTag) error {
 			"Publication": &types.AttributeValueMemberS{Value: item.Publication},
 			"Tag":         &types.AttributeValueMemberS{Value: item.Tag},
 		},
+		ReturnValues: types.ReturnValueAllOld, // used to get old content
 	}
 
-	_, err := t.db.PutItem(ctx, &input2)
+	putItemOutput, err := t.db.PutItem(ctx, &input2)
 	if err != nil {
 		fmt.Println("error storing new item 1111: ", err)
 		return err
 	}
 
-	input3 := dynamodb.UpdateItemInput{
-		TableName: aws.String("article-follow-tag"),
-		Key: map[string]types.AttributeValue{
-			"PK#PUB": &types.AttributeValueMemberS{Value: fmt.Sprintf("PUB#%s", item.Publication)},
-			"SK":     &types.AttributeValueMemberS{Value: item.Tag},
-		},
-		UpdateExpression: aws.String("SET TotalCount = if_not_exists(TotalCount, :v1) + :incr, Tag = :v2"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":v1":   &types.AttributeValueMemberN{Value: "0"},
-			":incr": &types.AttributeValueMemberN{Value: "1"},
-			":v2":   &types.AttributeValueMemberS{Value: item.Tag},
-		},
-	}
+	// update popular tag count only if the user is following new tag
+	// means when user follows already followed tag we dont need to update count
+	if putItemOutput.Attributes == nil {
+		input3 := dynamodb.UpdateItemInput{
+			TableName: aws.String("article-follow-tag"),
+			Key: map[string]types.AttributeValue{
+				"PK#PUB": &types.AttributeValueMemberS{Value: fmt.Sprintf("PUB#%s", item.Publication)},
+				"SK":     &types.AttributeValueMemberS{Value: item.Tag},
+			},
+			UpdateExpression: aws.String("SET TotalCount = if_not_exists(TotalCount, :v1) + :incr, Tag = :v2"),
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":v1":   &types.AttributeValueMemberN{Value: "0"},
+				":incr": &types.AttributeValueMemberN{Value: "1"},
+				":v2":   &types.AttributeValueMemberS{Value: item.Tag},
+			},
+		}
 
-	_, err = t.db.UpdateItem(ctx, &input3)
-	if err != nil {
-		fmt.Println("error storing new item 2222: ", err)
-		return err
+		_, err = t.db.UpdateItem(ctx, &input3)
+		if err != nil {
+			fmt.Println("error storing new item 2222: ", err)
+			return err
+		}
 	}
 
 	return nil
@@ -222,6 +227,7 @@ func (t *tag) GetPopularTags(ctx context.Context, item *UserTag) ([]string, erro
 			":v1": &types.AttributeValueMemberS{Value: fmt.Sprintf("PUB#%s", item.Publication)},
 			":v2": &types.AttributeValueMemberN{Value: strconv.Itoa(constant.PopularTagCount)},
 		},
+		Limit: aws.Int32(constant.PopularTagLimit),
 	}
 
 	// exclude existing tags from the popular tags
