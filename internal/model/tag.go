@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -35,7 +34,7 @@ func NewTag(m dynamoAPI) UserTagStore {
 // DescribeTable
 func (t *tag) DescribeTable(ctx context.Context) error {
 	input := dynamodb.DescribeTableInput{
-		TableName: aws.String("article-follow-tag"),
+		TableName: aws.String("article-follow-tag-2"),
 	}
 
 	_, err := t.db.DescribeTable(ctx, &input)
@@ -49,7 +48,7 @@ func (t *tag) DescribeTable(ctx context.Context) error {
 // CreateTable
 func (t *tag) CreateTable(ctx context.Context) error {
 	i := dynamodb.CreateTableInput{
-		TableName: aws.String("article-follow-tag"),
+		TableName: aws.String("article-follow-tag-2"),
 		AttributeDefinitions: []types.AttributeDefinition{{
 			AttributeName: aws.String("PK#PUB"),
 			AttributeType: types.ScalarAttributeTypeS,
@@ -61,14 +60,14 @@ func (t *tag) CreateTable(ctx context.Context) error {
 			// 	AttributeName: aws.String("Publication"),
 			// 	AttributeType: types.ScalarAttributeTypeS,
 			// },
+			// {
+			// 	AttributeName: aws.String("Tag"),
+			// 	AttributeType: types.ScalarAttributeTypeS,
+			// },
 			{
-				AttributeName: aws.String("Tag"),
+				AttributeName: aws.String("TotalCount"),
 				AttributeType: types.ScalarAttributeTypeS,
 			},
-			//  {
-			// 	AttributeName: aws.String("TotalCount"),
-			// 	AttributeType: types.ScalarAttributeTypeS,
-			// }
 		},
 		KeySchema: []types.KeySchemaElement{{
 			AttributeName: aws.String("PK#PUB"),
@@ -83,7 +82,7 @@ func (t *tag) CreateTable(ctx context.Context) error {
 				AttributeName: aws.String("PK#PUB"),
 				KeyType:       types.KeyTypeHash,
 			}, {
-				AttributeName: aws.String("Tag"),
+				AttributeName: aws.String("TotalCount"),
 				KeyType:       types.KeyTypeRange,
 			}},
 			Projection: &types.Projection{ProjectionType: types.ProjectionTypeAll},
@@ -108,14 +107,25 @@ func (t *tag) CreateTable(ctx context.Context) error {
 }
 
 func (t *tag) Store(ctx context.Context, item *UserTag) error {
+	// convert struct to map
+	// inputMap, err := attributevalue.MarshalMap(item)
+	// if err != nil {
+	// 	log.Fatal("marshal failed", err)
+	// 	return err
+	// }
+
+	// inputMap["PK#PUB"] = &types.AttributeValueMemberS{Value: fmt.Sprintf("%v#%v", item.Username, item.Publication)}
+	// inputMap["SK"] = &types.AttributeValueMemberS{Value: item.Tag}
+
 	input2 := dynamodb.PutItemInput{
-		TableName: aws.String("article-follow-tag"),
+		TableName: aws.String("article-follow-tag-2"),
 		Item: map[string]types.AttributeValue{
 			"PK#PUB":      &types.AttributeValueMemberS{Value: fmt.Sprintf("%v#%v", item.Username, item.Publication)},
 			"SK":          &types.AttributeValueMemberS{Value: item.Tag},
 			"Publication": &types.AttributeValueMemberS{Value: item.Publication},
 			"Tag":         &types.AttributeValueMemberS{Value: item.Tag},
 		},
+		// Item:         inputMap,
 		ReturnValues: types.ReturnValueAllOld, // used to get old content
 	}
 
@@ -129,7 +139,7 @@ func (t *tag) Store(ctx context.Context, item *UserTag) error {
 	// means when user follows already followed tag we dont need to update count
 	if putItemOutput.Attributes == nil {
 		input3 := dynamodb.UpdateItemInput{
-			TableName: aws.String("article-follow-tag"),
+			TableName: aws.String("article-follow-tag-2"),
 			Key: map[string]types.AttributeValue{
 				"PK#PUB": &types.AttributeValueMemberS{Value: fmt.Sprintf("PUB#%s", item.Publication)},
 				"SK":     &types.AttributeValueMemberS{Value: item.Tag},
@@ -144,7 +154,7 @@ func (t *tag) Store(ctx context.Context, item *UserTag) error {
 
 		_, err = t.db.UpdateItem(ctx, &input3)
 		if err != nil {
-			fmt.Println("error storing new item 2222: ", err)
+			fmt.Println("error updating tag counter while storing item", err)
 			return err
 		}
 	}
@@ -154,8 +164,7 @@ func (t *tag) Store(ctx context.Context, item *UserTag) error {
 
 func (t *tag) Get(ctx context.Context, item *UserTag) ([]string, error) {
 	queryInput := dynamodb.QueryInput{
-		TableName:              aws.String("article-follow-tag"),
-		IndexName:              aws.String("TagIndex"),
+		TableName:              aws.String("article-follow-tag-2"),
 		KeyConditionExpression: aws.String("#v1 = :v1"),
 		ExpressionAttributeNames: map[string]string{
 			"#v1": "PK#PUB",
@@ -188,11 +197,12 @@ func (t *tag) Get(ctx context.Context, item *UserTag) ([]string, error) {
 
 func (t *tag) Delete(ctx context.Context, item *UserTag) error {
 	input := dynamodb.DeleteItemInput{
-		TableName: aws.String("article-follow-tag"),
+		TableName: aws.String("article-follow-tag-2"),
 		Key: map[string]types.AttributeValue{
 			"PK#PUB": &types.AttributeValueMemberS{Value: fmt.Sprintf("%s#%s", item.Username, item.Publication)},
 			"SK":     &types.AttributeValueMemberS{Value: item.Tag},
 		},
+		ReturnValues: types.ReturnValueAllOld,
 	}
 
 	// fetch item
@@ -208,26 +218,37 @@ func (t *tag) GetPopularTags(ctx context.Context, item *UserTag) ([]string, erro
 	// Steps:
 	// 1. Fetch the existing tags of the user
 	// 2. To get popular tags, excluded the existing tags using filterExpression
+	var (
+		existingTags []string
+		err          error
+	)
 
-	existingTags, err := t.Get(ctx, item)
-	if err != nil {
-		return nil, err
+	// check for empty username, when no username passed
+	// return all tags of that particular publication
+	if item.Username != "" {
+		existingTags, err = t.Get(ctx, item)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	queryInput := dynamodb.QueryInput{
-		TableName:              aws.String("article-follow-tag"),
+		TableName:              aws.String("article-follow-tag-2"),
+		IndexName:              aws.String("TagIndex"),
 		KeyConditionExpression: aws.String("#v1 = :v1"),
-		// FilterExpression:       aws.String("#v2 > :v2 AND NOT (Tag IN :v3)"),
-		FilterExpression: aws.String("#v2 > :v2"),
+		// FilterExpression:       aws.String("NOT (Tag IN :v3)"),
+		// FilterExpression: aws.String(""),
+		// FilterExpression: aws.String("#v2 > :v2"),
 		ExpressionAttributeNames: map[string]string{
 			"#v1": "PK#PUB",
-			"#v2": "TotalCount",
+			// "#v2": "TotalCount",
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":v1": &types.AttributeValueMemberS{Value: fmt.Sprintf("PUB#%s", item.Publication)},
-			":v2": &types.AttributeValueMemberN{Value: strconv.Itoa(constant.PopularTagCount)},
+			// ":v2": &types.AttributeValueMemberN{Value: strconv.Itoa(constant.PopularTagCount)},
 		},
-		Limit: aws.Int32(constant.PopularTagLimit),
+		ScanIndexForward: aws.Bool(false),
+		Limit:            aws.Int32(constant.PopularTagLimit),
 	}
 
 	// exclude existing tags from the popular tags
@@ -258,13 +279,14 @@ func (t *tag) GetPopularTags(ctx context.Context, item *UserTag) ([]string, erro
 }
 
 func prepareFilterExpression(queryInput *dynamodb.QueryInput, existingTags []string) {
-	filterExpression := fmt.Sprintf("%s AND NOT (Tag IN (", *queryInput.FilterExpression)
+	// filterExpression := fmt.Sprintf("%s  NOT (Tag IN (", *queryInput.FilterExpression)
+	filterExpression := fmt.Sprintf("NOT (Tag IN (")
 
 	filterAttr := []string{}
 
 	for k, val := range existingTags {
 
-		//
+		// prepare key
 		key := fmt.Sprintf(":exclude%v", k)
 
 		filterAttr = append(filterAttr, key)
