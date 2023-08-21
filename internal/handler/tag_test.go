@@ -345,19 +345,6 @@ func Test_PopularTags(t *testing.T) {
 			wantRespBody: &response.Body{Status: http.StatusOK, Message: ""},
 		},
 		{
-			name: "should fail when invalid request is passed - empty username",
-			args: args{
-				urlParams:   map[string]string{"publication": "AK"},
-				queryParams: map[string]string{"username": ""},
-			},
-			mockDB: func() *handler.Application {
-				m := model.Models{}
-
-				return handler.New(nil, &m)
-			},
-			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "username field is required"},
-		},
-		{
 			name: "should fail when invalid request is passed - empty publication",
 			args: args{
 				urlParams:   map[string]string{"publication": ""},

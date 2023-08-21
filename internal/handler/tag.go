@@ -303,13 +303,6 @@ func (app *Application) validateGetPopularTagRequest(w http.ResponseWriter, r *h
 
 	// TODO : use validator to validate request
 
-	if req.Username == "" {
-		err = errors.New("username field is required")
-		response.BadRequest(w, "username field is required")
-
-		return err
-	}
-
 	if req.Publication == "" {
 		err = errors.New("publication field is required")
 		response.BadRequest(w, "publication field is required")

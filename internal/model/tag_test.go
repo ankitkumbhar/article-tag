@@ -397,7 +397,7 @@ func Test_GetPopularTags(t *testing.T) {
 			a := tt.mockDB()
 
 			// call model function
-			userTags, err := a.Tag.GetPopularTags(context.TODO(), &model.UserTag{})
+			userTags, err := a.Tag.GetPopularTags(context.TODO(), &tt.args.item)
 
 			if tt.wantErr == nil {
 				assert.Equal(t, tt.wantErr, err)
