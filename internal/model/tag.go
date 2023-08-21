@@ -206,9 +206,31 @@ func (t *tag) Delete(ctx context.Context, item *UserTag) error {
 	}
 
 	// fetch item
-	_, err := t.db.DeleteItem(ctx, &input)
+	delItemResp, err := t.db.DeleteItem(ctx, &input)
 	if err != nil {
 		return err
+	}
+
+	// when delete item response contains attribute
+	// decrement the popularity count of deleted tag
+	if delItemResp.Attributes != nil {
+		input3 := dynamodb.UpdateItemInput{
+			TableName: aws.String("article-follow-tag-2"),
+			Key: map[string]types.AttributeValue{
+				"PK#PUB": &types.AttributeValueMemberS{Value: fmt.Sprintf("PUB#%s", item.Publication)},
+				"SK":     &types.AttributeValueMemberS{Value: item.Tag},
+			},
+			UpdateExpression: aws.String("SET TotalCount = TotalCount - :decr"),
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":decr": &types.AttributeValueMemberN{Value: "1"},
+			},
+		}
+
+		_, err = t.db.UpdateItem(ctx, &input3)
+		if err != nil {
+			fmt.Println("error updating tag counter while deleting item : ", err)
+			return err
+		}
 	}
 
 	return nil
