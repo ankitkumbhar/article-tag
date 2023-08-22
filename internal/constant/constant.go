@@ -1,10 +1,11 @@
 package constant
 
+// PopularTagLimit
 const (
-	PopularTagCount = 0
-	PopularTagLimit = 50
+	PopularTagLimit = 2
 )
 
+// AllowdedPublications
 var AllowdedPublications = []string{
 	"AK",
 	"RS",

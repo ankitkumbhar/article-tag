@@ -42,6 +42,8 @@ func (app *Application) Store() http.HandlerFunc {
 		// store follow tag
 		for _, val := range req.Tags {
 			item := model.UserTag{
+				PK:          fmt.Sprintf("%v#%v", req.Username, req.Publication),
+				SK:          val,
 				Username:    req.Username,
 				Publication: req.Publication,
 				Tag:         val,

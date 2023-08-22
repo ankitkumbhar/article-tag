@@ -276,6 +276,19 @@ func Test_Delete(t *testing.T) {
 			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "publication field is required"},
 		},
 		{
+			name: "should fail when invalid request is passed - empty tags",
+			args: args{
+				types.DeleteTagRequest{Username: "Test", Tags: []string{}},
+				map[string]string{"publication": "AK"},
+			},
+			mockDB: func() *handler.Application {
+				m := model.Models{}
+
+				return handler.New(nil, &m)
+			},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "atleast one tag is required"},
+		},
+		{
 			name: "Should fail when receive error from database while deleting userTag",
 			args: args{
 				types.DeleteTagRequest{Username: "Test", Tags: []string{"tag101"}},
