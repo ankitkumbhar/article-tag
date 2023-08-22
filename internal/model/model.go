@@ -17,10 +17,16 @@ type UserTagStore interface {
 
 type UserTag struct {
 	Username    string
+	PK          string
 	SK          string
 	Publication string
 	Tag         string
-	Tags        []string
+}
+
+// ExclusiveStartKey
+type ExclusiveStartKey struct {
+	SK         string
+	TotalCount string
 }
 
 type Models struct {

@@ -291,7 +291,13 @@ func Test_Delete(t *testing.T) {
 				models := model.NewModel(nil)
 
 				dmock := mocks.NewDynamoAPI(t)
-				dmock.EXPECT().DeleteItem(mock.Anything, mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
+				dmock.EXPECT().DeleteItem(mock.Anything, mock.Anything).Return(&dynamodb.DeleteItemOutput{
+					Attributes: map[string]types.AttributeValue{
+						"PK": &types.AttributeValueMemberS{Value: "Test#AA"},
+					},
+				}, nil)
+
+				dmock.EXPECT().UpdateItem(mock.Anything, mock.Anything).Return(&dynamodb.UpdateItemOutput{}, nil)
 				models.Tag = model.NewTag(dmock)
 
 				return models
