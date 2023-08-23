@@ -27,18 +27,6 @@ func (app *Application) Store() http.HandlerFunc {
 			return
 		}
 
-		// check table exists
-		err = app.model.Tag.DescribeTable(ctx)
-		if err != nil {
-			err = app.model.Tag.CreateTable(ctx)
-			if err != nil {
-				fmt.Println("error creating table : ", err)
-				response.InternalServerError(w, "error while creating table")
-
-				return
-			}
-		}
-
 		// store follow tag
 		for _, val := range req.Tags {
 			item := model.UserTag{

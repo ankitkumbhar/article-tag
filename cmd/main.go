@@ -5,6 +5,7 @@ import (
 	"article-tag/internal/handler"
 	"article-tag/internal/model"
 	"article-tag/internal/routes"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -22,7 +23,29 @@ func init() {
 
 	models := model.NewModel(db)
 
+	// check and create table
+	err = checkAndCreateTable(&models)
+	if err != nil {
+		panic(err)
+	}
+
 	app = handler.New(db, &models)
+}
+
+// checkAndCreateTable
+func checkAndCreateTable(models *model.Models) error {
+	// check table exists
+	err := models.Tag.DescribeTable(context.TODO())
+	if err != nil {
+		err = models.Tag.CreateTable(context.TODO())
+		if err != nil {
+			log.Println("error creating table : ", err)
+
+			return err
+		}
+	}
+
+	return nil
 }
 
 func main() {
