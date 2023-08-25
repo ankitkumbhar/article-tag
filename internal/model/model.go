@@ -9,24 +9,26 @@ import (
 type UserTagStore interface {
 	DescribeTable(ctx context.Context) error
 	CreateTable(ctx context.Context) error
-	Store(ctx context.Context, item *UserTag) error
-	Get(ctx context.Context, item *UserTag) ([]string, error)
-	Delete(ctx context.Context, item *UserTag) error
-	GetPopularTags(ctx context.Context, item *UserTag) ([]string, error)
+	Store(ctx context.Context, username, publication, tagID, tagName string) error
+	Get(ctx context.Context, username, publication, order string) ([]*UserTag, error)
+	Delete(ctx context.Context, username, publication, tagID, tagName string) error
+	GetPopularTags(ctx context.Context, username, publication string) ([]string, error)
 }
 
 type UserTag struct {
-	Username    string
 	PK          string
 	SK          string
+	TagID       string
+	TagName     string
+	CreatedAt   string
+	Username    string
 	Publication string
-	Tag         string
 }
 
 // ExclusiveStartKey
 type ExclusiveStartKey struct {
-	SK         string
-	TotalCount string
+	SK       string
+	TagCount string
 }
 
 type Models struct {

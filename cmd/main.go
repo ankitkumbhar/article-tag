@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 var app *handler.Application
@@ -34,6 +35,9 @@ func init() {
 
 // checkAndCreateTable
 func checkAndCreateTable(models *model.Models) error {
+	// wait for some time until docker is up
+	time.Sleep(time.Second * 2)
+
 	// check table exists
 	err := models.Tag.DescribeTable(context.TODO())
 	if err != nil {

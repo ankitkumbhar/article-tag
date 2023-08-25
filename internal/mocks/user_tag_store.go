@@ -64,13 +64,13 @@ func (_c *UserTagStore_CreateTable_Call) RunAndReturn(run func(context.Context) 
 	return _c
 }
 
-// Delete provides a mock function with given fields: ctx, item
-func (_m *UserTagStore) Delete(ctx context.Context, item *model.UserTag) error {
-	ret := _m.Called(ctx, item)
+// Delete provides a mock function with given fields: ctx, username, publication, tagID, tagName
+func (_m *UserTagStore) Delete(ctx context.Context, username string, publication string, tagID string, tagName string) error {
+	ret := _m.Called(ctx, username, publication, tagID, tagName)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *model.UserTag) error); ok {
-		r0 = rf(ctx, item)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
+		r0 = rf(ctx, username, publication, tagID, tagName)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -85,14 +85,17 @@ type UserTagStore_Delete_Call struct {
 
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - item *model.UserTag
-func (_e *UserTagStore_Expecter) Delete(ctx interface{}, item interface{}) *UserTagStore_Delete_Call {
-	return &UserTagStore_Delete_Call{Call: _e.mock.On("Delete", ctx, item)}
+//   - username string
+//   - publication string
+//   - tagID string
+//   - tagName string
+func (_e *UserTagStore_Expecter) Delete(ctx interface{}, username interface{}, publication interface{}, tagID interface{}, tagName interface{}) *UserTagStore_Delete_Call {
+	return &UserTagStore_Delete_Call{Call: _e.mock.On("Delete", ctx, username, publication, tagID, tagName)}
 }
 
-func (_c *UserTagStore_Delete_Call) Run(run func(ctx context.Context, item *model.UserTag)) *UserTagStore_Delete_Call {
+func (_c *UserTagStore_Delete_Call) Run(run func(ctx context.Context, username string, publication string, tagID string, tagName string)) *UserTagStore_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*model.UserTag))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
 	})
 	return _c
 }
@@ -102,7 +105,7 @@ func (_c *UserTagStore_Delete_Call) Return(_a0 error) *UserTagStore_Delete_Call 
 	return _c
 }
 
-func (_c *UserTagStore_Delete_Call) RunAndReturn(run func(context.Context, *model.UserTag) error) *UserTagStore_Delete_Call {
+func (_c *UserTagStore_Delete_Call) RunAndReturn(run func(context.Context, string, string, string, string) error) *UserTagStore_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -149,25 +152,25 @@ func (_c *UserTagStore_DescribeTable_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
-// Get provides a mock function with given fields: ctx, item
-func (_m *UserTagStore) Get(ctx context.Context, item *model.UserTag) ([]string, error) {
-	ret := _m.Called(ctx, item)
+// Get provides a mock function with given fields: ctx, username, publication, order
+func (_m *UserTagStore) Get(ctx context.Context, username string, publication string, order string) ([]*model.UserTag, error) {
+	ret := _m.Called(ctx, username, publication, order)
 
-	var r0 []string
+	var r0 []*model.UserTag
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *model.UserTag) ([]string, error)); ok {
-		return rf(ctx, item)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) ([]*model.UserTag, error)); ok {
+		return rf(ctx, username, publication, order)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *model.UserTag) []string); ok {
-		r0 = rf(ctx, item)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) []*model.UserTag); ok {
+		r0 = rf(ctx, username, publication, order)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
+			r0 = ret.Get(0).([]*model.UserTag)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *model.UserTag) error); ok {
-		r1 = rf(ctx, item)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, username, publication, order)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -182,47 +185,49 @@ type UserTagStore_Get_Call struct {
 
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
-//   - item *model.UserTag
-func (_e *UserTagStore_Expecter) Get(ctx interface{}, item interface{}) *UserTagStore_Get_Call {
-	return &UserTagStore_Get_Call{Call: _e.mock.On("Get", ctx, item)}
+//   - username string
+//   - publication string
+//   - order string
+func (_e *UserTagStore_Expecter) Get(ctx interface{}, username interface{}, publication interface{}, order interface{}) *UserTagStore_Get_Call {
+	return &UserTagStore_Get_Call{Call: _e.mock.On("Get", ctx, username, publication, order)}
 }
 
-func (_c *UserTagStore_Get_Call) Run(run func(ctx context.Context, item *model.UserTag)) *UserTagStore_Get_Call {
+func (_c *UserTagStore_Get_Call) Run(run func(ctx context.Context, username string, publication string, order string)) *UserTagStore_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*model.UserTag))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
 	})
 	return _c
 }
 
-func (_c *UserTagStore_Get_Call) Return(_a0 []string, _a1 error) *UserTagStore_Get_Call {
+func (_c *UserTagStore_Get_Call) Return(_a0 []*model.UserTag, _a1 error) *UserTagStore_Get_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *UserTagStore_Get_Call) RunAndReturn(run func(context.Context, *model.UserTag) ([]string, error)) *UserTagStore_Get_Call {
+func (_c *UserTagStore_Get_Call) RunAndReturn(run func(context.Context, string, string, string) ([]*model.UserTag, error)) *UserTagStore_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetPopularTags provides a mock function with given fields: ctx, item
-func (_m *UserTagStore) GetPopularTags(ctx context.Context, item *model.UserTag) ([]string, error) {
-	ret := _m.Called(ctx, item)
+// GetPopularTags provides a mock function with given fields: ctx, username, publication
+func (_m *UserTagStore) GetPopularTags(ctx context.Context, username string, publication string) ([]string, error) {
+	ret := _m.Called(ctx, username, publication)
 
 	var r0 []string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *model.UserTag) ([]string, error)); ok {
-		return rf(ctx, item)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]string, error)); ok {
+		return rf(ctx, username, publication)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *model.UserTag) []string); ok {
-		r0 = rf(ctx, item)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) []string); ok {
+		r0 = rf(ctx, username, publication)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *model.UserTag) error); ok {
-		r1 = rf(ctx, item)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, username, publication)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -237,14 +242,15 @@ type UserTagStore_GetPopularTags_Call struct {
 
 // GetPopularTags is a helper method to define mock.On call
 //   - ctx context.Context
-//   - item *model.UserTag
-func (_e *UserTagStore_Expecter) GetPopularTags(ctx interface{}, item interface{}) *UserTagStore_GetPopularTags_Call {
-	return &UserTagStore_GetPopularTags_Call{Call: _e.mock.On("GetPopularTags", ctx, item)}
+//   - username string
+//   - publication string
+func (_e *UserTagStore_Expecter) GetPopularTags(ctx interface{}, username interface{}, publication interface{}) *UserTagStore_GetPopularTags_Call {
+	return &UserTagStore_GetPopularTags_Call{Call: _e.mock.On("GetPopularTags", ctx, username, publication)}
 }
 
-func (_c *UserTagStore_GetPopularTags_Call) Run(run func(ctx context.Context, item *model.UserTag)) *UserTagStore_GetPopularTags_Call {
+func (_c *UserTagStore_GetPopularTags_Call) Run(run func(ctx context.Context, username string, publication string)) *UserTagStore_GetPopularTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*model.UserTag))
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
 	})
 	return _c
 }
@@ -254,18 +260,18 @@ func (_c *UserTagStore_GetPopularTags_Call) Return(_a0 []string, _a1 error) *Use
 	return _c
 }
 
-func (_c *UserTagStore_GetPopularTags_Call) RunAndReturn(run func(context.Context, *model.UserTag) ([]string, error)) *UserTagStore_GetPopularTags_Call {
+func (_c *UserTagStore_GetPopularTags_Call) RunAndReturn(run func(context.Context, string, string) ([]string, error)) *UserTagStore_GetPopularTags_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// Store provides a mock function with given fields: ctx, item
-func (_m *UserTagStore) Store(ctx context.Context, item *model.UserTag) error {
-	ret := _m.Called(ctx, item)
+// Store provides a mock function with given fields: ctx, username, publication, tagID, tagName
+func (_m *UserTagStore) Store(ctx context.Context, username string, publication string, tagID string, tagName string) error {
+	ret := _m.Called(ctx, username, publication, tagID, tagName)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *model.UserTag) error); ok {
-		r0 = rf(ctx, item)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
+		r0 = rf(ctx, username, publication, tagID, tagName)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -280,14 +286,17 @@ type UserTagStore_Store_Call struct {
 
 // Store is a helper method to define mock.On call
 //   - ctx context.Context
-//   - item *model.UserTag
-func (_e *UserTagStore_Expecter) Store(ctx interface{}, item interface{}) *UserTagStore_Store_Call {
-	return &UserTagStore_Store_Call{Call: _e.mock.On("Store", ctx, item)}
+//   - username string
+//   - publication string
+//   - tagID string
+//   - tagName string
+func (_e *UserTagStore_Expecter) Store(ctx interface{}, username interface{}, publication interface{}, tagID interface{}, tagName interface{}) *UserTagStore_Store_Call {
+	return &UserTagStore_Store_Call{Call: _e.mock.On("Store", ctx, username, publication, tagID, tagName)}
 }
 
-func (_c *UserTagStore_Store_Call) Run(run func(ctx context.Context, item *model.UserTag)) *UserTagStore_Store_Call {
+func (_c *UserTagStore_Store_Call) Run(run func(ctx context.Context, username string, publication string, tagID string, tagName string)) *UserTagStore_Store_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*model.UserTag))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
 	})
 	return _c
 }
@@ -297,7 +306,7 @@ func (_c *UserTagStore_Store_Call) Return(_a0 error) *UserTagStore_Store_Call {
 	return _c
 }
 
-func (_c *UserTagStore_Store_Call) RunAndReturn(run func(context.Context, *model.UserTag) error) *UserTagStore_Store_Call {
+func (_c *UserTagStore_Store_Call) RunAndReturn(run func(context.Context, string, string, string, string) error) *UserTagStore_Store_Call {
 	_c.Call.Return(run)
 	return _c
 }

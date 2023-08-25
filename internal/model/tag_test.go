@@ -193,7 +193,7 @@ func Test_Store(t *testing.T) {
 			a := tt.mockDB()
 
 			// call model function
-			err := a.Tag.Store(context.TODO(), &model.UserTag{})
+			err := a.Tag.Store(context.TODO(), tt.args.item.Username, tt.args.item.Publication, tt.args.item.TagID, tt.args.item.TagName)
 
 			if tt.wantErr == nil {
 				assert.Equal(t, tt.wantErr, err)
@@ -208,7 +208,8 @@ func Test_Store(t *testing.T) {
 
 func Test_Get(t *testing.T) {
 	type args struct {
-		item model.UserTag
+		item  model.UserTag
+		order string
 	}
 
 	tests := []struct {
@@ -216,7 +217,7 @@ func Test_Get(t *testing.T) {
 		args    args
 		mockDB  func() model.Models
 		wantErr error
-		want    []string
+		want    []*model.UserTag
 	}{
 		{
 			name: "success",
@@ -227,7 +228,8 @@ func Test_Get(t *testing.T) {
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().Query(mock.Anything, mock.Anything).Return(&dynamodb.QueryOutput{Items: []map[string]types.AttributeValue{
 					map[string]types.AttributeValue{
-						"tag": &types.AttributeValueMemberS{Value: "tag1"},
+						"TagID":   &types.AttributeValueMemberS{Value: "1"},
+						"TagName": &types.AttributeValueMemberS{Value: "tag1"},
 					},
 				}}, nil)
 				models.Tag = model.NewTag(dmock)
@@ -235,7 +237,10 @@ func Test_Get(t *testing.T) {
 				return models
 			},
 			wantErr: nil,
-			want:    []string{"tag1"},
+			want: []*model.UserTag{{
+				TagID:   "1",
+				TagName: "tag1",
+			}},
 		},
 		{
 			name: "Should fail when received error in query call",
@@ -258,7 +263,7 @@ func Test_Get(t *testing.T) {
 			a := tt.mockDB()
 
 			// call model function
-			tags, err := a.Tag.Get(context.TODO(), &model.UserTag{})
+			tags, err := a.Tag.Get(context.TODO(), tt.args.item.Username, tt.args.item.Publication, tt.args.order)
 
 			if tt.wantErr == nil {
 				assert.Equal(t, tt.wantErr, err)
@@ -326,7 +331,7 @@ func Test_Delete(t *testing.T) {
 			a := tt.mockDB()
 
 			// call model function
-			err := a.Tag.Delete(context.TODO(), &model.UserTag{})
+			err := a.Tag.Delete(context.TODO(), tt.args.item.Username, tt.args.item.Publication, tt.args.item.TagID, tt.args.item.TagName)
 
 			if tt.wantErr == nil {
 				assert.Equal(t, tt.wantErr, err)
@@ -360,14 +365,14 @@ func Test_GetPopularTags(t *testing.T) {
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().Query(mock.Anything, mock.Anything).Return(&dynamodb.QueryOutput{Items: []map[string]types.AttributeValue{
 					map[string]types.AttributeValue{
-						"tag": &types.AttributeValueMemberS{Value: "tag1"},
+						"TagName": &types.AttributeValueMemberS{Value: "tag1"},
 					},
 				}}, nil).Once()
 
 				dmock.EXPECT().Query(mock.Anything, mock.Anything).Return(&dynamodb.QueryOutput{Items: []map[string]types.AttributeValue{
 					map[string]types.AttributeValue{
-						"tag": &types.AttributeValueMemberS{Value: "tag101"},
-						"SK":  &types.AttributeValueMemberS{Value: "tag101"},
+						"TagName": &types.AttributeValueMemberS{Value: "tag101"},
+						"SK":      &types.AttributeValueMemberS{Value: "1"},
 					},
 				}}, nil)
 				models.Tag = model.NewTag(dmock)
@@ -386,7 +391,7 @@ func Test_GetPopularTags(t *testing.T) {
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().Query(mock.Anything, mock.Anything).Return(&dynamodb.QueryOutput{Items: []map[string]types.AttributeValue{
 					map[string]types.AttributeValue{
-						"tag": &types.AttributeValueMemberS{Value: "tag1"},
+						"TagName": &types.AttributeValueMemberS{Value: "tag1"},
 					},
 				}}, nil).Once()
 				dmock.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, errors.New("mock error")).Once()
@@ -403,7 +408,7 @@ func Test_GetPopularTags(t *testing.T) {
 			a := tt.mockDB()
 
 			// call model function
-			userTags, err := a.Tag.GetPopularTags(context.TODO(), &tt.args.item)
+			userTags, err := a.Tag.GetPopularTags(context.TODO(), tt.args.item.Username, tt.args.item.Publication)
 
 			if tt.wantErr == nil {
 				assert.Equal(t, tt.wantErr, err)

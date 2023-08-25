@@ -35,13 +35,12 @@ func Test_Store(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				req:       types.StoreTagRequest{Username: "Test", Tags: []string{"tag100"}},
+				req:       types.StoreTagRequest{Username: "Test", Tags: []types.Tag{{TagID: "1", TagName: "tag100"}}},
 				urlParams: map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
-				tagStoreMock.EXPECT().DescribeTable(mock.Anything).Return(nil)
-				tagStoreMock.EXPECT().Store(mock.Anything, mock.Anything).Return(nil)
+				tagStoreMock.EXPECT().Store(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 				m := model.Models{
 					Tag: tagStoreMock,
@@ -54,7 +53,7 @@ func Test_Store(t *testing.T) {
 		{
 			name: "should fail when invalid request is passed - empty username",
 			args: args{
-				req:       types.StoreTagRequest{Username: "", Tags: []string{"tag100"}},
+				req:       types.StoreTagRequest{Username: "", Tags: []types.Tag{{TagID: "1", TagName: "tag100"}}},
 				urlParams: map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
@@ -67,7 +66,7 @@ func Test_Store(t *testing.T) {
 		{
 			name: "should fail when invalid request is passed - empty publication",
 			args: args{
-				req:       types.StoreTagRequest{Username: "Test", Tags: []string{"tag100"}},
+				req:       types.StoreTagRequest{Username: "Test", Tags: []types.Tag{{TagID: "1", TagName: "tag100"}}},
 				urlParams: map[string]string{"publication": ""},
 			},
 			mockDB: func() *handler.Application {
@@ -80,7 +79,7 @@ func Test_Store(t *testing.T) {
 		{
 			name: "should fail when invalid request is passed - empty tags",
 			args: args{
-				req:       types.StoreTagRequest{Username: "Test", Tags: []string{}},
+				req:       types.StoreTagRequest{Username: "Test", Tags: []types.Tag{}},
 				urlParams: map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
@@ -93,13 +92,13 @@ func Test_Store(t *testing.T) {
 		{
 			name: "should fail when got error while storing user tags",
 			args: args{
-				req:       types.StoreTagRequest{Username: "Test", Tags: []string{"tag101"}},
+				req:       types.StoreTagRequest{Username: "Test", Tags: []types.Tag{{TagID: "1", TagName: "tag100"}}},
 				urlParams: map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
-				tagStoreMock.EXPECT().DescribeTable(mock.Anything).Return(nil)
-				tagStoreMock.EXPECT().Store(mock.Anything, mock.Anything).Return(errors.New("db error"))
+				// tagStoreMock.EXPECT().DescribeTable(mock.Anything).Return(nil)
+				tagStoreMock.EXPECT().Store(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error"))
 
 				m := model.Models{Tag: tagStoreMock}
 
@@ -148,7 +147,7 @@ func Test_Get(t *testing.T) {
 			},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
-				tagStoreMock.EXPECT().Get(mock.Anything, mock.Anything).Return([]string{}, nil)
+				tagStoreMock.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]*model.UserTag{}, nil)
 
 				m := model.Models{
 					Tag: tagStoreMock,
@@ -192,7 +191,7 @@ func Test_Get(t *testing.T) {
 			},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
-				tagStoreMock.EXPECT().Get(mock.Anything, mock.Anything).Return([]string{}, errors.New("db error"))
+				tagStoreMock.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]*model.UserTag{}, errors.New("db error"))
 
 				m := model.Models{Tag: tagStoreMock}
 
@@ -234,12 +233,12 @@ func Test_Delete(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				types.DeleteTagRequest{Username: "Test", Tags: []string{"tag101"}},
+				types.DeleteTagRequest{Username: "Test", Tags: []types.Tag{{TagID: "", TagName: "tag101"}}},
 				map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
-				tagStoreMock.EXPECT().Delete(mock.Anything, mock.Anything).Return(nil)
+				tagStoreMock.EXPECT().Delete(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 				m := model.Models{
 					Tag: tagStoreMock,
@@ -252,7 +251,7 @@ func Test_Delete(t *testing.T) {
 		{
 			name: "should fail when invalid request is passed - empty username",
 			args: args{
-				types.DeleteTagRequest{Username: "", Tags: []string{"tag101"}},
+				types.DeleteTagRequest{Username: "", Tags: []types.Tag{{TagID: "", TagName: "tag101"}}},
 				map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
@@ -265,7 +264,7 @@ func Test_Delete(t *testing.T) {
 		{
 			name: "should fail when invalid request is passed - empty publication",
 			args: args{
-				types.DeleteTagRequest{Username: "Test", Tags: []string{"tag101"}},
+				types.DeleteTagRequest{Username: "Test", Tags: []types.Tag{{TagID: "", TagName: "tag101"}}},
 				map[string]string{"publication": ""},
 			},
 			mockDB: func() *handler.Application {
@@ -278,7 +277,7 @@ func Test_Delete(t *testing.T) {
 		{
 			name: "should fail when invalid request is passed - empty tags",
 			args: args{
-				types.DeleteTagRequest{Username: "Test", Tags: []string{}},
+				types.DeleteTagRequest{Username: "Test", Tags: []types.Tag{}},
 				map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
@@ -291,12 +290,12 @@ func Test_Delete(t *testing.T) {
 		{
 			name: "Should fail when receive error from database while deleting userTag",
 			args: args{
-				types.DeleteTagRequest{Username: "Test", Tags: []string{"tag101"}},
+				types.DeleteTagRequest{Username: "Test", Tags: []types.Tag{{TagID: "", TagName: "tag101"}}},
 				map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
-				tagStoreMock.EXPECT().Delete(mock.Anything, mock.Anything).Return(errors.New("db error"))
+				tagStoreMock.EXPECT().Delete(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("db error"))
 
 				m := model.Models{
 					Tag: tagStoreMock,
@@ -347,7 +346,7 @@ func Test_PopularTags(t *testing.T) {
 			},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
-				tagStoreMock.EXPECT().GetPopularTags(mock.Anything, mock.Anything).Return([]string{"tag101"}, nil)
+				tagStoreMock.EXPECT().GetPopularTags(mock.Anything, mock.Anything, mock.Anything).Return([]string{"tag101"}, nil)
 
 				m := model.Models{
 					Tag: tagStoreMock,
@@ -378,7 +377,7 @@ func Test_PopularTags(t *testing.T) {
 			},
 			mockDB: func() *handler.Application {
 				tagStoreMock := mocks.NewUserTagStore(t)
-				tagStoreMock.EXPECT().GetPopularTags(mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
+				tagStoreMock.EXPECT().GetPopularTags(mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
 
 				m := model.Models{
 					Tag: tagStoreMock,

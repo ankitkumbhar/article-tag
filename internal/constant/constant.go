@@ -12,3 +12,10 @@ var AllowdedPublications = []string{
 	"BC",
 	"ST",
 }
+
+// Order
+const (
+	CreatedAtDesc = "createdatdesc"
+	CreatedAtAsc  = "createdatasc"
+	TagName       = "tagname"
+)

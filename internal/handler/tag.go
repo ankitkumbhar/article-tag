@@ -2,12 +2,10 @@ package handler
 
 import (
 	"article-tag/internal/constant"
-	"article-tag/internal/model"
 	"article-tag/internal/response"
 	"article-tag/internal/types"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -29,15 +27,7 @@ func (app *Application) Store() http.HandlerFunc {
 
 		// store follow tag
 		for _, val := range req.Tags {
-			item := model.UserTag{
-				PK:          fmt.Sprintf("%v#%v", req.Username, req.Publication),
-				SK:          val,
-				Username:    req.Username,
-				Publication: req.Publication,
-				Tag:         val,
-			}
-
-			err = app.model.Tag.Store(ctx, &item)
+			err = app.model.Tag.Store(ctx, req.Username, req.Publication, val.TagID, val.TagName)
 			if err != nil {
 				log.Println("error storing item : ", err)
 				response.InternalServerError(w, "error while storing user tag")
@@ -63,13 +53,8 @@ func (app *Application) Get() http.HandlerFunc {
 			return
 		}
 
-		item := model.UserTag{
-			Username:    req.Username,
-			Publication: req.Publication,
-		}
-
 		// fetch tags using username and publication
-		userTag, err := app.model.Tag.Get(ctx, &item)
+		userTags, err := app.model.Tag.Get(ctx, req.Username, req.Publication, req.Order)
 		if err != nil {
 			log.Println("error fetching item : ", err)
 			response.InternalServerError(w, "error while fetching user tags")
@@ -77,8 +62,16 @@ func (app *Application) Get() http.HandlerFunc {
 			return
 		}
 
+		var tags []types.Tag
+		for _, val := range userTags {
+			tags = append(tags, types.Tag{
+				TagID:   val.TagID,
+				TagName: val.TagName,
+			})
+		}
+
 		// prepare response
-		resp := types.GetTagResponse{Tags: userTag}
+		resp := types.GetTagResponse{Tags: tags}
 
 		response.Success(w, resp, "")
 	}
@@ -98,13 +91,8 @@ func (app *Application) Delete() http.HandlerFunc {
 		}
 
 		for _, val := range req.Tags {
-			item := model.UserTag{
-				Username:    req.Username,
-				Publication: req.Publication,
-				Tag:         val,
-			}
-
-			err = app.model.Tag.Delete(ctx, &item)
+			// delete user tag
+			err = app.model.Tag.Delete(ctx, req.Username, req.Publication, val.TagID, val.TagName)
 			if err != nil {
 				log.Println("error deleting item : ", err)
 				response.InternalServerError(w, "error while deleting user followed tags")
@@ -130,12 +118,8 @@ func (app *Application) PopularTag() http.HandlerFunc {
 			return
 		}
 
-		item := model.UserTag{
-			Username:    req.Username,
-			Publication: req.Publication,
-		}
-
-		userTags, err := app.model.Tag.GetPopularTags(ctx, &item)
+		// fetch popularTags
+		userTags, err := app.model.Tag.GetPopularTags(ctx, req.Username, req.Publication)
 		if err != nil {
 			log.Println("error while fetching popular tags for user", err)
 			response.InternalServerError(w, "error while fetching popular tags")
@@ -205,6 +189,8 @@ func (app *Application) validateGetRequest(w http.ResponseWriter, r *http.Reques
 
 	// fetch username from queryParams
 	req.Username = r.URL.Query().Get("username")
+
+	req.Order = r.URL.Query().Get("order")
 
 	// fetch params from urlParams
 	req.Publication = chi.URLParam(r, "publication")
