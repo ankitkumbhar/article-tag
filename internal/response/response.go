@@ -8,7 +8,8 @@ import (
 type Body struct {
 	Status  int         `json:"status"`
 	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Data    interface{} `json:"data,omitempty"`
+	Errors  interface{} `json:"errors,omitempty"`
 }
 
 // Created
@@ -33,10 +34,11 @@ func Success(w http.ResponseWriter, data interface{}, msg string) {
 }
 
 // BadRequest
-func BadRequest(w http.ResponseWriter, msg string) {
+func BadRequest(w http.ResponseWriter, msg string, errs interface{}) {
 	b := Body{
 		Status:  http.StatusBadRequest,
 		Message: msg,
+		Errors:  errs,
 	}
 
 	sendResponse(w, &b)

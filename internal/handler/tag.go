@@ -5,11 +5,11 @@ import (
 	"article-tag/internal/response"
 	"article-tag/internal/types"
 	"encoding/json"
-	"errors"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/go-playground/validator/v10"
 )
 
 func (app *Application) Store() http.HandlerFunc {
@@ -27,7 +27,7 @@ func (app *Application) Store() http.HandlerFunc {
 
 		// store follow tag
 		for _, val := range req.Tags {
-			err = app.model.Tag.Store(ctx, req.Username, req.Publication, val.TagID, val.TagName)
+			err = app.model.Tag.Store(ctx, req.Username, req.Publication, val.TagName, val.TagID)
 			if err != nil {
 				log.Println("error storing item : ", err)
 				response.InternalServerError(w, "error while storing user tag")
@@ -135,48 +135,26 @@ func (app *Application) validateStoreRequest(w http.ResponseWriter, r *http.Requ
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		log.Println("error decoding request body : ", err)
-		response.BadRequest(w, "invalid request")
+		response.BadRequest(w, "invalid request", nil)
 
 		return err
 	}
 
 	req.Publication = chi.URLParam(r, "publication")
 
-	// TODO : use validator to validate request
+	// validator.InvalidValidationError
 
-	if req.Username == "" {
-		err = errors.New("username field is required")
-		response.BadRequest(w, "username field is required")
+	err = app.validate.Struct(req)
+	if err != nil {
 
-		return err
-	}
-
-	if req.Publication == "" {
-		err = errors.New("publication field is required")
-		response.BadRequest(w, "publication field is required")
-
-		return err
-	}
-
-	var isValidPublication bool
-	for _, v := range constant.AllowdedPublications {
-		if req.Publication == v {
-			isValidPublication = true
-
-			break
+		var errorBag []map[string]interface{}
+		for _, v := range err.(validator.ValidationErrors) {
+			errorBag = append(errorBag, map[string]interface{}{
+				v.Field(): constant.TagError[v.Field()],
+			})
 		}
-	}
 
-	if !isValidPublication {
-		err = errors.New("invalid publication passed")
-		response.BadRequest(w, "invalid publication passed, please pass valid publication")
-
-		return err
-	}
-
-	if len(req.Tags) == 0 {
-		err = errors.New("atleast one tag is required")
-		response.BadRequest(w, "atleast one tag is required")
+		response.BadRequest(w, "", errorBag)
 
 		return err
 	}
@@ -195,18 +173,17 @@ func (app *Application) validateGetRequest(w http.ResponseWriter, r *http.Reques
 	// fetch params from urlParams
 	req.Publication = chi.URLParam(r, "publication")
 
-	// TODO : use validator to validate request
+	err = app.validate.Struct(req)
+	if err != nil {
 
-	if req.Username == "" {
-		err = errors.New("username field is required")
-		response.BadRequest(w, "username field is required")
+		var errorBag []map[string]interface{}
+		for _, v := range err.(validator.ValidationErrors) {
+			errorBag = append(errorBag, map[string]interface{}{
+				v.Field(): constant.TagError[v.Field()],
+			})
+		}
 
-		return err
-	}
-
-	if req.Publication == "" {
-		err = errors.New("publication field is required")
-		response.BadRequest(w, "publication field is required")
+		response.BadRequest(w, "", errorBag)
 
 		return err
 	}
@@ -218,7 +195,7 @@ func (app *Application) validateDeleteRequest(w http.ResponseWriter, r *http.Req
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		log.Println("error decoding request body : ", err)
-		response.BadRequest(w, "invalid request")
+		response.BadRequest(w, "invalid request", nil)
 
 		return err
 	}
@@ -226,41 +203,17 @@ func (app *Application) validateDeleteRequest(w http.ResponseWriter, r *http.Req
 	// fetch params from urlParams
 	req.Publication = chi.URLParam(r, "publication")
 
-	// TODO : use validator to validate request
+	err = app.validate.Struct(req)
+	if err != nil {
 
-	if req.Username == "" {
-		err = errors.New("username field is required")
-		response.BadRequest(w, "username field is required")
-
-		return err
-	}
-
-	if req.Publication == "" {
-		err = errors.New("publication field is required")
-		response.BadRequest(w, "publication field is required")
-
-		return err
-	}
-
-	var isValidPublication bool
-	for _, v := range constant.AllowdedPublications {
-		if req.Publication == v {
-			isValidPublication = true
-
-			break
+		var errorBag []map[string]interface{}
+		for _, v := range err.(validator.ValidationErrors) {
+			errorBag = append(errorBag, map[string]interface{}{
+				v.Field(): constant.TagError[v.Field()],
+			})
 		}
-	}
 
-	if !isValidPublication {
-		err = errors.New("invalid publication passed")
-		response.BadRequest(w, "invalid publication passed, please pass valid publication")
-
-		return err
-	}
-
-	if len(req.Tags) == 0 {
-		err = errors.New("atleast one tag is required")
-		response.BadRequest(w, "atleast one tag is required")
+		response.BadRequest(w, "", errorBag)
 
 		return err
 	}
@@ -277,11 +230,17 @@ func (app *Application) validateGetPopularTagRequest(w http.ResponseWriter, r *h
 	// fetch params from urlParams
 	req.Publication = chi.URLParam(r, "publication")
 
-	// TODO : use validator to validate request
+	err = app.validate.Struct(req)
+	if err != nil {
 
-	if req.Publication == "" {
-		err = errors.New("publication field is required")
-		response.BadRequest(w, "publication field is required")
+		var errorBag []map[string]interface{}
+		for _, v := range err.(validator.ValidationErrors) {
+			errorBag = append(errorBag, map[string]interface{}{
+				v.Field(): constant.TagError[v.Field()],
+			})
+		}
+
+		response.BadRequest(w, "", errorBag)
 
 		return err
 	}

@@ -31,6 +31,7 @@ func Test_Store(t *testing.T) {
 		mockDB       func() *handler.Application
 		wantResp     string
 		wantRespBody *response.Body
+		wantErrors   map[string]string
 	}{
 		{
 			name: "success",
@@ -61,7 +62,8 @@ func Test_Store(t *testing.T) {
 
 				return handler.New(nil, &m)
 			},
-			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "username field is required"},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest},
+			wantErrors:   map[string]string{"Username": "field is required"},
 		},
 		{
 			name: "should fail when invalid request is passed - empty publication",
@@ -74,12 +76,13 @@ func Test_Store(t *testing.T) {
 
 				return handler.New(nil, &m)
 			},
-			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "publication field is required"},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest},
+			wantErrors:   map[string]string{"Publication": "field is required, and must be a valid publications"},
 		},
 		{
 			name: "should fail when invalid request is passed - empty tags",
 			args: args{
-				req:       types.StoreTagRequest{Username: "Test", Tags: []types.Tag{}},
+				req:       types.StoreTagRequest{Username: "Test", Tags: nil},
 				urlParams: map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
@@ -87,7 +90,8 @@ func Test_Store(t *testing.T) {
 
 				return handler.New(nil, &m)
 			},
-			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "atleast one tag is required"},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest},
+			wantErrors:   map[string]string{"Tags": "atleast one tag is required"},
 		},
 		{
 			name: "should fail when got error while storing user tags",
@@ -117,10 +121,18 @@ func Test_Store(t *testing.T) {
 			rawReq, _ := json.Marshal(tt.args.req)
 			got, gotErr := callEndpoint(t, rawReq, handlerFunc, tt.args.urlParams, nil)
 
-			if tt.wantRespBody != nil {
-				assert.Nil(t, gotErr)
-				assert.Equal(t, got.Status, tt.wantRespBody.Status)
-				assert.Equal(t, got.Message, tt.wantRespBody.Message)
+			assert.Nil(t, gotErr)
+			assert.Equal(t, got.Status, tt.wantRespBody.Status)
+			assert.Equal(t, got.Message, tt.wantRespBody.Message)
+
+			if tt.wantErrors != nil {
+				gotErrors := []map[string]string{}
+				errJSON, _ := json.Marshal(got.Errors)
+				json.Unmarshal(errJSON, &gotErrors)
+
+				for k, v := range tt.wantErrors {
+					assert.Equal(t, v, gotErrors[0][k])
+				}
 			}
 		})
 	}
@@ -138,6 +150,7 @@ func Test_Get(t *testing.T) {
 		mockDB       func() *handler.Application
 		wantResp     string
 		wantRespBody *response.Body
+		wantErrors   map[string]string
 	}{
 		{
 			name: "success",
@@ -168,7 +181,8 @@ func Test_Get(t *testing.T) {
 
 				return handler.New(nil, &m)
 			},
-			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "username field is required"},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest},
+			wantErrors:   map[string]string{"Username": "field is required"},
 		},
 		{
 			name: "should fail when invalid request is passed - empty publication",
@@ -181,7 +195,8 @@ func Test_Get(t *testing.T) {
 
 				return handler.New(nil, &m)
 			},
-			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "publication field is required"},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest},
+			wantErrors:   map[string]string{"Publication": "field is required, and must be a valid publications"},
 		},
 		{
 			name: "should fail when got error while storing user tags",
@@ -208,10 +223,19 @@ func Test_Get(t *testing.T) {
 			handlerFunc := app.Get()
 
 			got, gotErr := callEndpoint(t, nil, handlerFunc, tt.args.urlParams, tt.args.queryParams)
-			if tt.wantRespBody != nil {
-				assert.Nil(t, gotErr)
-				assert.Equal(t, got.Status, tt.wantRespBody.Status)
-				assert.Equal(t, got.Message, tt.wantRespBody.Message)
+
+			assert.Nil(t, gotErr)
+			assert.Equal(t, got.Status, tt.wantRespBody.Status)
+			assert.Equal(t, got.Message, tt.wantRespBody.Message)
+
+			if tt.wantErrors != nil {
+				gotErrors := []map[string]string{}
+				errJSON, _ := json.Marshal(got.Errors)
+				json.Unmarshal(errJSON, &gotErrors)
+
+				for k, v := range tt.wantErrors {
+					assert.Equal(t, v, gotErrors[0][k])
+				}
 			}
 		})
 	}
@@ -229,11 +253,12 @@ func Test_Delete(t *testing.T) {
 		mockDB       func() *handler.Application
 		wantResp     string
 		wantRespBody *response.Body
+		wantErrors   map[string]string
 	}{
 		{
 			name: "success",
 			args: args{
-				types.DeleteTagRequest{Username: "Test", Tags: []types.Tag{{TagID: "", TagName: "tag101"}}},
+				types.DeleteTagRequest{Username: "Test", Tags: []types.Tag{{TagID: "1", TagName: "tag101"}}},
 				map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
@@ -259,7 +284,8 @@ func Test_Delete(t *testing.T) {
 
 				return handler.New(nil, &m)
 			},
-			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "username field is required"},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest},
+			wantErrors:   map[string]string{"Username": "field is required"},
 		},
 		{
 			name: "should fail when invalid request is passed - empty publication",
@@ -272,12 +298,13 @@ func Test_Delete(t *testing.T) {
 
 				return handler.New(nil, &m)
 			},
-			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "publication field is required"},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest},
+			wantErrors:   map[string]string{"Publication": "field is required, and must be a valid publications"},
 		},
 		{
 			name: "should fail when invalid request is passed - empty tags",
 			args: args{
-				types.DeleteTagRequest{Username: "Test", Tags: []types.Tag{}},
+				types.DeleteTagRequest{Username: "Test", Tags: nil},
 				map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
@@ -285,12 +312,13 @@ func Test_Delete(t *testing.T) {
 
 				return handler.New(nil, &m)
 			},
-			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "atleast one tag is required"},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest},
+			wantErrors:   map[string]string{"Tags": "atleast one tag is required"},
 		},
 		{
 			name: "Should fail when receive error from database while deleting userTag",
 			args: args{
-				types.DeleteTagRequest{Username: "Test", Tags: []types.Tag{{TagID: "", TagName: "tag101"}}},
+				types.DeleteTagRequest{Username: "Test", Tags: []types.Tag{{TagID: "1", TagName: "tag101"}}},
 				map[string]string{"publication": "AK"},
 			},
 			mockDB: func() *handler.Application {
@@ -316,10 +344,19 @@ func Test_Delete(t *testing.T) {
 			rawReq, _ := json.Marshal(tt.args.req)
 
 			got, gotErr := callEndpoint(t, rawReq, handlerFunc, tt.args.urlParams, nil)
-			if tt.wantRespBody != nil {
-				assert.Nil(t, gotErr)
-				assert.Equal(t, got.Status, tt.wantRespBody.Status)
-				assert.Equal(t, got.Message, tt.wantRespBody.Message)
+
+			assert.Nil(t, gotErr)
+			assert.Equal(t, got.Status, tt.wantRespBody.Status)
+			assert.Equal(t, got.Message, tt.wantRespBody.Message)
+
+			if tt.wantErrors != nil {
+				gotErrors := []map[string]string{}
+				errJSON, _ := json.Marshal(got.Errors)
+				json.Unmarshal(errJSON, &gotErrors)
+
+				for k, v := range tt.wantErrors {
+					assert.Equal(t, v, gotErrors[0][k])
+				}
 			}
 		})
 	}
@@ -337,6 +374,7 @@ func Test_PopularTags(t *testing.T) {
 		mockDB       func() *handler.Application
 		wantResp     string
 		wantRespBody *response.Body
+		wantErrors   map[string]string
 	}{
 		{
 			name: "success",
@@ -367,7 +405,8 @@ func Test_PopularTags(t *testing.T) {
 
 				return handler.New(nil, &m)
 			},
-			wantRespBody: &response.Body{Status: http.StatusBadRequest, Message: "publication field is required"},
+			wantRespBody: &response.Body{Status: http.StatusBadRequest},
+			wantErrors:   map[string]string{"Publication": "field is required, and must be a valid publications"},
 		},
 		{
 			name: "Should fail when receive error from database while fetching popular userTag",
@@ -396,10 +435,19 @@ func Test_PopularTags(t *testing.T) {
 			handlerFunc := app.PopularTag()
 
 			got, gotErr := callEndpoint(t, nil, handlerFunc, tt.args.urlParams, tt.args.queryParams)
-			if tt.wantRespBody != nil {
-				assert.Nil(t, gotErr)
-				assert.Equal(t, got.Status, tt.wantRespBody.Status)
-				assert.Equal(t, got.Message, tt.wantRespBody.Message)
+
+			assert.Nil(t, gotErr)
+			assert.Equal(t, got.Status, tt.wantRespBody.Status)
+			assert.Equal(t, got.Message, tt.wantRespBody.Message)
+
+			if tt.wantErrors != nil {
+				gotErrors := []map[string]string{}
+				errJSON, _ := json.Marshal(got.Errors)
+				json.Unmarshal(errJSON, &gotErrors)
+
+				for k, v := range tt.wantErrors {
+					assert.Equal(t, v, gotErrors[0][k])
+				}
 			}
 		})
 	}

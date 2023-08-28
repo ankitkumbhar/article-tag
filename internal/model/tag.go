@@ -15,7 +15,7 @@ import (
 )
 
 // tableName
-const tableName = "article-follow-tag-v4"
+const tableName = "article-follow-tag-v5"
 
 // dynamoAPI
 type dynamoAPI interface {
