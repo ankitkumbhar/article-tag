@@ -17,9 +17,33 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"go.uber.org/zap"
 )
 
+func testSuite() *zap.Logger {
+	rawJSON := []byte(`{
+		"level": "debug",
+		"encoding": "json",
+		"outputPaths": ["stdout", "/tmp/logs"],
+		"errorOutputPaths": ["stderr"],
+		"encoderConfig": {
+		  "messageKey": "message",
+		  "levelKey": "level",
+		  "levelEncoder": "lowercase"
+		}
+	  }`)
+
+	var cfg zap.Config
+	if err := json.Unmarshal(rawJSON, &cfg); err != nil {
+		panic(err)
+	}
+
+	return zap.Must(cfg.Build())
+}
+
 func Test_Store(t *testing.T) {
+	log := testSuite()
+
 	type args struct {
 		req       types.StoreTagRequest
 		urlParams map[string]string
@@ -47,7 +71,7 @@ func Test_Store(t *testing.T) {
 					Tag: tagStoreMock,
 				}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusCreated, Message: ""},
 		},
@@ -60,7 +84,7 @@ func Test_Store(t *testing.T) {
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusBadRequest},
 			wantErrors:   map[string]string{"Username": "field is required"},
@@ -74,7 +98,7 @@ func Test_Store(t *testing.T) {
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusBadRequest},
 			wantErrors:   map[string]string{"Publication": "field is required, and must be a valid publications"},
@@ -88,7 +112,7 @@ func Test_Store(t *testing.T) {
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusBadRequest},
 			wantErrors:   map[string]string{"Tags": "atleast one tag is required"},
@@ -106,7 +130,7 @@ func Test_Store(t *testing.T) {
 
 				m := model.Models{Tag: tagStoreMock}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusInternalServerError, Message: "error while storing user tag"},
 		},
@@ -139,6 +163,8 @@ func Test_Store(t *testing.T) {
 }
 
 func Test_Get(t *testing.T) {
+	log := testSuite()
+
 	type args struct {
 		urlParams   map[string]string
 		queryParams map[string]string
@@ -166,7 +192,7 @@ func Test_Get(t *testing.T) {
 					Tag: tagStoreMock,
 				}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusOK, Message: ""},
 		},
@@ -179,7 +205,7 @@ func Test_Get(t *testing.T) {
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusBadRequest},
 			wantErrors:   map[string]string{"Username": "field is required"},
@@ -193,7 +219,7 @@ func Test_Get(t *testing.T) {
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusBadRequest},
 			wantErrors:   map[string]string{"Publication": "field is required, and must be a valid publications"},
@@ -210,7 +236,7 @@ func Test_Get(t *testing.T) {
 
 				m := model.Models{Tag: tagStoreMock}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusInternalServerError, Message: "error while fetching user tags"},
 		},
@@ -242,6 +268,8 @@ func Test_Get(t *testing.T) {
 }
 
 func Test_Delete(t *testing.T) {
+	log := testSuite()
+
 	type args struct {
 		req       types.DeleteTagRequest
 		urlParams map[string]string
@@ -269,7 +297,7 @@ func Test_Delete(t *testing.T) {
 					Tag: tagStoreMock,
 				}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusOK, Message: ""},
 		},
@@ -282,7 +310,7 @@ func Test_Delete(t *testing.T) {
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusBadRequest},
 			wantErrors:   map[string]string{"Username": "field is required"},
@@ -296,7 +324,7 @@ func Test_Delete(t *testing.T) {
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusBadRequest},
 			wantErrors:   map[string]string{"Publication": "field is required, and must be a valid publications"},
@@ -310,7 +338,7 @@ func Test_Delete(t *testing.T) {
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusBadRequest},
 			wantErrors:   map[string]string{"Tags": "atleast one tag is required"},
@@ -329,7 +357,7 @@ func Test_Delete(t *testing.T) {
 					Tag: tagStoreMock,
 				}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusInternalServerError, Message: "error while deleting user followed tags"},
 		},
@@ -363,6 +391,8 @@ func Test_Delete(t *testing.T) {
 }
 
 func Test_PopularTags(t *testing.T) {
+	log := testSuite()
+
 	type args struct {
 		urlParams   map[string]string
 		queryParams map[string]string
@@ -390,7 +420,7 @@ func Test_PopularTags(t *testing.T) {
 					Tag: tagStoreMock,
 				}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusOK, Message: ""},
 		},
@@ -403,7 +433,7 @@ func Test_PopularTags(t *testing.T) {
 			mockDB: func() *handler.Application {
 				m := model.Models{}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusBadRequest},
 			wantErrors:   map[string]string{"Publication": "field is required, and must be a valid publications"},
@@ -422,7 +452,7 @@ func Test_PopularTags(t *testing.T) {
 					Tag: tagStoreMock,
 				}
 
-				return handler.New(nil, &m)
+				return handler.New(nil, &m, log)
 			},
 			wantRespBody: &response.Body{Status: http.StatusInternalServerError, Message: "error while fetching popular tags"},
 		},

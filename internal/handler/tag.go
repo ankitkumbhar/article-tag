@@ -5,11 +5,12 @@ import (
 	"article-tag/internal/response"
 	"article-tag/internal/types"
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
 	"github.com/go-playground/validator/v10"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func (app *Application) Store() http.HandlerFunc {
@@ -20,7 +21,8 @@ func (app *Application) Store() http.HandlerFunc {
 		// validate request
 		err := app.validateStoreRequest(w, r, &req)
 		if err != nil {
-			log.Println("error storing item : ", err)
+			app.logger.Error("error validating storing request", zap.Error(err), zap.Field{Key: "request",
+				Type: zapcore.ReflectType, Interface: req})
 
 			return
 		}
@@ -29,7 +31,8 @@ func (app *Application) Store() http.HandlerFunc {
 		for _, val := range req.Tags {
 			err = app.model.Tag.Store(ctx, req.Username, req.Publication, val.TagName, val.TagID)
 			if err != nil {
-				log.Println("error storing item : ", err)
+				app.logger.Error("error while storing item", zap.Error(err), zap.Field{Key: "request",
+					Type: zapcore.ReflectType, Interface: req})
 				response.InternalServerError(w, "error while storing user tag")
 
 				return
@@ -48,7 +51,8 @@ func (app *Application) Get() http.HandlerFunc {
 		// validate request
 		err := app.validateGetRequest(w, r, &req)
 		if err != nil {
-			log.Println("error storing item : ", err)
+			app.logger.Error("error validating get request", zap.Error(err), zap.Field{Key: "request",
+				Type: zapcore.ReflectType, Interface: req})
 
 			return
 		}
@@ -56,7 +60,8 @@ func (app *Application) Get() http.HandlerFunc {
 		// fetch tags using username and publication
 		userTags, err := app.model.Tag.Get(ctx, req.Username, req.Publication, req.Order)
 		if err != nil {
-			log.Println("error fetching item : ", err)
+			app.logger.Error("error fetching user tags from db", zap.Error(err), zap.Field{Key: "request",
+				Type: zapcore.ReflectType, Interface: req})
 			response.InternalServerError(w, "error while fetching user tags")
 
 			return
@@ -85,7 +90,8 @@ func (app *Application) Delete() http.HandlerFunc {
 		// validate request
 		err := app.validateDeleteRequest(w, r, &req)
 		if err != nil {
-			log.Println("error storing item : ", err)
+			app.logger.Error("error validating delete request", zap.Error(err), zap.Field{Key: "request",
+				Type: zapcore.ReflectType, Interface: req})
 
 			return
 		}
@@ -94,7 +100,8 @@ func (app *Application) Delete() http.HandlerFunc {
 			// delete user tag
 			err = app.model.Tag.Delete(ctx, req.Username, req.Publication, val.TagID, val.TagName)
 			if err != nil {
-				log.Println("error deleting item : ", err)
+				app.logger.Error("error deleting user tags", zap.Error(err), zap.Field{Key: "request",
+					Type: zapcore.ReflectType, Interface: req})
 				response.InternalServerError(w, "error while deleting user followed tags")
 
 				return
@@ -113,7 +120,8 @@ func (app *Application) PopularTag() http.HandlerFunc {
 		// validate request
 		err := app.validateGetPopularTagRequest(w, r, &req)
 		if err != nil {
-			log.Println("error storing item : ", err)
+			app.logger.Error("error validating get popular tag request", zap.Error(err), zap.Field{Key: "request",
+				Type: zapcore.ReflectType, Interface: req})
 
 			return
 		}
@@ -121,7 +129,8 @@ func (app *Application) PopularTag() http.HandlerFunc {
 		// fetch popularTags
 		userTags, err := app.model.Tag.GetPopularTags(ctx, req.Username, req.Publication)
 		if err != nil {
-			log.Println("error while fetching popular tags for user", err)
+			app.logger.Error("error fetching popular tags from db", zap.Error(err), zap.Field{Key: "request",
+				Type: zapcore.ReflectType, Interface: req})
 			response.InternalServerError(w, "error while fetching popular tags")
 
 			return
@@ -134,7 +143,7 @@ func (app *Application) PopularTag() http.HandlerFunc {
 func (app *Application) validateStoreRequest(w http.ResponseWriter, r *http.Request, req *types.StoreTagRequest) error {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		log.Println("error decoding request body : ", err)
+		app.logger.Error("error decoding store request body", zap.Error(err))
 		response.BadRequest(w, "invalid request", nil)
 
 		return err
@@ -194,7 +203,7 @@ func (app *Application) validateGetRequest(w http.ResponseWriter, r *http.Reques
 func (app *Application) validateDeleteRequest(w http.ResponseWriter, r *http.Request, req *types.DeleteTagRequest) error {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		log.Println("error decoding request body : ", err)
+		app.logger.Error("error decoding delete request body", zap.Error(err))
 		response.BadRequest(w, "invalid request", nil)
 
 		return err

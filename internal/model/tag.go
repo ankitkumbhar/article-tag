@@ -4,7 +4,6 @@ import (
 	"article-tag/internal/constant"
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -12,6 +11,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // tableName
@@ -28,12 +29,13 @@ type dynamoAPI interface {
 }
 
 type tag struct {
-	db dynamoAPI
+	db     dynamoAPI
+	logger *zap.Logger
 	// db dynamodb.Client
 }
 
-func NewTag(m dynamoAPI) UserTagStore {
-	return &tag{db: m}
+func NewTag(m dynamoAPI, logger *zap.Logger) UserTagStore {
+	return &tag{db: m, logger: logger}
 }
 
 // DescribeTable
@@ -138,7 +140,7 @@ func (t *tag) CreateTable(ctx context.Context) error {
 
 	_, err := t.db.CreateTable(ctx, &i)
 	if err != nil {
-		log.Println("Error creating table", err)
+		t.logger.Error("error creating table", zap.Error(err))
 		return err
 	}
 
@@ -159,7 +161,7 @@ func (t *tag) Store(ctx context.Context, username, publication, tagName, tagID s
 	// convert struct to map
 	inputMap, err := attributevalue.MarshalMap(item)
 	if err != nil {
-		log.Println("marshal failed", err)
+		t.logger.Error("marshal failed", zap.Error(err))
 		return err
 	}
 
@@ -171,7 +173,6 @@ func (t *tag) Store(ctx context.Context, username, publication, tagName, tagID s
 
 	putItemOutput, err := t.db.PutItem(ctx, &input2)
 	if err != nil {
-		log.Println("error storing new item: ", err)
 		return err
 	}
 
@@ -195,7 +196,7 @@ func (t *tag) Store(ctx context.Context, username, publication, tagName, tagID s
 
 		_, err = t.db.UpdateItem(ctx, &input3)
 		if err != nil {
-			log.Println("error updating tag counter while storing item", err)
+			t.logger.Error("error updating tag counter while storing item", zap.Error(err))
 			return err
 		}
 	}
@@ -206,6 +207,9 @@ func (t *tag) Store(ctx context.Context, username, publication, tagName, tagID s
 func (t *tag) Get(ctx context.Context, username, publication, order string) ([]*UserTag, error) {
 	// get indexname and scanIndex using order
 	indexName, scanIndex := getIndexNameAndScanOrder(order)
+
+	t.logger.Debug("selected indexName and scanOrder", zapcore.Field{Key: "index_name", Type: zapcore.StringType,
+		String: indexName}, zapcore.Field{Key: "scan_index", Type: zapcore.BoolType, Interface: scanIndex})
 
 	queryInput := dynamodb.QueryInput{
 		TableName:              aws.String(tableName),
@@ -233,7 +237,8 @@ func (t *tag) Get(ctx context.Context, username, publication, order string) ([]*
 
 		err := attributevalue.UnmarshalMap(val, &m)
 		if err != nil {
-			log.Println("unmarshal failed while fetching user tags", err)
+			t.logger.Error("unmarshal failed while fetching user tags", zap.Error(err))
+			return nil, err
 		}
 
 		userTags = append(userTags, &UserTag{
@@ -275,8 +280,6 @@ func getIndexNameAndScanOrder(order string) (string, bool) {
 
 		scanIndex = true
 	}
-
-	log.Println("selected order : ", indexName, scanIndex)
 
 	return indexName, scanIndex
 }
@@ -322,7 +325,7 @@ func (t *tag) Delete(ctx context.Context, username, publication, tagID, tagName 
 
 		_, err = t.db.UpdateItem(ctx, &input3)
 		if err != nil {
-			log.Println("error updating tag counter while deleting item : ", err)
+			t.logger.Error("error updating tag counter while deleting item", zap.Error(err))
 			return err
 		}
 	}
@@ -377,7 +380,8 @@ func (t *tag) GetPopularTags(ctx context.Context, username, publication string) 
 			sk := ExclusiveStartKey{}
 			err = attributevalue.UnmarshalMap(exclusiveStartKey, &sk)
 			if err != nil {
-				log.Println("unmarshal failed", err)
+				t.logger.Error("unmarshal failed", zap.Error(err))
+				return nil, err
 			}
 
 			// queryInput.ExclusiveStartKey = starKey
@@ -411,7 +415,7 @@ func (t *tag) GetPopularTags(ctx context.Context, username, publication string) 
 
 			err := attributevalue.UnmarshalMap(val, &m)
 			if err != nil {
-				log.Println("unmarshal failed", err)
+				t.logger.Error("unmarshal failed", zap.Error(err))
 				return nil, err
 			}
 

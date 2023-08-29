@@ -4,6 +4,7 @@ import (
 	"article-tag/internal/mocks"
 	"article-tag/internal/model"
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -11,9 +12,33 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"go.uber.org/zap"
 )
 
+func testSuite() *zap.Logger {
+	rawJSON := []byte(`{
+		"level": "debug",
+		"encoding": "json",
+		"outputPaths": ["stdout", "/tmp/logs"],
+		"errorOutputPaths": ["stderr"],
+		"encoderConfig": {
+		  "messageKey": "message",
+		  "levelKey": "level",
+		  "levelEncoder": "lowercase"
+		}
+	  }`)
+
+	var cfg zap.Config
+	if err := json.Unmarshal(rawJSON, &cfg); err != nil {
+		panic(err)
+	}
+
+	return zap.Must(cfg.Build())
+}
+
 func Test_Describe(t *testing.T) {
+	log := testSuite()
+
 	type args struct {
 		item model.UserTag
 	}
@@ -28,11 +53,11 @@ func Test_Describe(t *testing.T) {
 			name: "success",
 			args: args{item: model.UserTag{Username: "Mock username"}},
 			mockDB: func() model.Models {
-				models := model.NewModel(nil)
+				models := model.NewModel(nil, log)
 
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().DescribeTable(mock.Anything, mock.Anything).Return(&dynamodb.DescribeTableOutput{}, nil)
-				models.Tag = model.NewTag(dmock)
+				models.Tag = model.NewTag(dmock, log)
 
 				return models
 			},
@@ -42,11 +67,11 @@ func Test_Describe(t *testing.T) {
 			name: "Should fail when received error in describe table",
 			args: args{item: model.UserTag{Username: "Mock username"}},
 			mockDB: func() model.Models {
-				models := model.NewModel(nil)
+				models := model.NewModel(nil, log)
 
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().DescribeTable(mock.Anything, mock.Anything).Return(&dynamodb.DescribeTableOutput{}, errors.New("mock error"))
-				models.Tag = model.NewTag(dmock)
+				models.Tag = model.NewTag(dmock, log)
 
 				return models
 			},
@@ -73,6 +98,8 @@ func Test_Describe(t *testing.T) {
 }
 
 func Test_CreateTable(t *testing.T) {
+	log := testSuite()
+
 	type args struct {
 		item model.UserTag
 	}
@@ -87,11 +114,11 @@ func Test_CreateTable(t *testing.T) {
 			name: "success",
 			args: args{item: model.UserTag{Username: "Mock username"}},
 			mockDB: func() model.Models {
-				models := model.NewModel(nil)
+				models := model.NewModel(nil, log)
 
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().CreateTable(mock.Anything, mock.Anything).Return(&dynamodb.CreateTableOutput{}, nil)
-				models.Tag = model.NewTag(dmock)
+				models.Tag = model.NewTag(dmock, log)
 
 				return models
 			},
@@ -101,11 +128,11 @@ func Test_CreateTable(t *testing.T) {
 			name: "Should fail when received error in describe table",
 			args: args{item: model.UserTag{Username: "Mock username"}},
 			mockDB: func() model.Models {
-				models := model.NewModel(nil)
+				models := model.NewModel(nil, log)
 
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().CreateTable(mock.Anything, mock.Anything).Return(&dynamodb.CreateTableOutput{}, errors.New("mock error"))
-				models.Tag = model.NewTag(dmock)
+				models.Tag = model.NewTag(dmock, log)
 
 				return models
 			},
@@ -132,6 +159,8 @@ func Test_CreateTable(t *testing.T) {
 }
 
 func Test_Store(t *testing.T) {
+	log := testSuite()
+
 	type args struct {
 		item model.UserTag
 	}
@@ -146,12 +175,12 @@ func Test_Store(t *testing.T) {
 			name: "success",
 			args: args{item: model.UserTag{Username: "Mock username"}},
 			mockDB: func() model.Models {
-				models := model.NewModel(nil)
+				models := model.NewModel(nil, log)
 
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().PutItem(mock.Anything, mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
 				dmock.EXPECT().UpdateItem(mock.Anything, mock.Anything).Return(&dynamodb.UpdateItemOutput{}, nil)
-				models.Tag = model.NewTag(dmock)
+				models.Tag = model.NewTag(dmock, log)
 
 				return models
 			},
@@ -161,11 +190,11 @@ func Test_Store(t *testing.T) {
 			name: "Should fail when received error in putItem call",
 			args: args{item: model.UserTag{Username: "Mock username"}},
 			mockDB: func() model.Models {
-				models := model.NewModel(nil)
+				models := model.NewModel(nil, log)
 
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().PutItem(mock.Anything, mock.Anything).Return(nil, errors.New("mock error"))
-				models.Tag = model.NewTag(dmock)
+				models.Tag = model.NewTag(dmock, log)
 
 				return models
 			},
@@ -175,12 +204,12 @@ func Test_Store(t *testing.T) {
 			name: "Should fail when received error in updateItem call",
 			args: args{item: model.UserTag{Username: "Mock username"}},
 			mockDB: func() model.Models {
-				models := model.NewModel(nil)
+				models := model.NewModel(nil, log)
 
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().PutItem(mock.Anything, mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
 				dmock.EXPECT().UpdateItem(mock.Anything, mock.Anything).Return(&dynamodb.UpdateItemOutput{}, errors.New("mock error"))
-				models.Tag = model.NewTag(dmock)
+				models.Tag = model.NewTag(dmock, log)
 
 				return models
 			},
@@ -207,6 +236,8 @@ func Test_Store(t *testing.T) {
 }
 
 func Test_Get(t *testing.T) {
+	log := testSuite()
+
 	type args struct {
 		item  model.UserTag
 		order string
@@ -223,7 +254,7 @@ func Test_Get(t *testing.T) {
 			name: "success",
 			args: args{item: model.UserTag{Username: "Mock username"}},
 			mockDB: func() model.Models {
-				models := model.NewModel(nil)
+				models := model.NewModel(nil, log)
 
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().Query(mock.Anything, mock.Anything).Return(&dynamodb.QueryOutput{Items: []map[string]types.AttributeValue{
@@ -232,7 +263,7 @@ func Test_Get(t *testing.T) {
 						"TagName": &types.AttributeValueMemberS{Value: "tag1"},
 					},
 				}}, nil)
-				models.Tag = model.NewTag(dmock)
+				models.Tag = model.NewTag(dmock, log)
 
 				return models
 			},
@@ -246,11 +277,11 @@ func Test_Get(t *testing.T) {
 			name: "Should fail when received error in query call",
 			args: args{item: model.UserTag{Username: "Mock username"}},
 			mockDB: func() model.Models {
-				models := model.NewModel(nil)
+				models := model.NewModel(nil, log)
 
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, errors.New("mock error"))
-				models.Tag = model.NewTag(dmock)
+				models.Tag = model.NewTag(dmock, log)
 
 				return models
 			},
@@ -278,6 +309,8 @@ func Test_Get(t *testing.T) {
 }
 
 func Test_Delete(t *testing.T) {
+	log := testSuite()
+
 	type args struct {
 		item model.UserTag
 	}
@@ -293,7 +326,7 @@ func Test_Delete(t *testing.T) {
 			name: "success",
 			args: args{item: model.UserTag{Username: "Mock username"}},
 			mockDB: func() model.Models {
-				models := model.NewModel(nil)
+				models := model.NewModel(nil, log)
 
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().DeleteItem(mock.Anything, mock.Anything).Return(&dynamodb.DeleteItemOutput{
@@ -303,7 +336,7 @@ func Test_Delete(t *testing.T) {
 				}, nil)
 
 				dmock.EXPECT().UpdateItem(mock.Anything, mock.Anything).Return(&dynamodb.UpdateItemOutput{}, nil)
-				models.Tag = model.NewTag(dmock)
+				models.Tag = model.NewTag(dmock, log)
 
 				return models
 			},
@@ -314,11 +347,11 @@ func Test_Delete(t *testing.T) {
 			name: "Should fail when received error in delete call",
 			args: args{item: model.UserTag{Username: "Mock username"}},
 			mockDB: func() model.Models {
-				models := model.NewModel(nil)
+				models := model.NewModel(nil, log)
 
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().DeleteItem(mock.Anything, mock.Anything).Return(nil, errors.New("mock error"))
-				models.Tag = model.NewTag(dmock)
+				models.Tag = model.NewTag(dmock, log)
 
 				return models
 			},
@@ -345,6 +378,8 @@ func Test_Delete(t *testing.T) {
 }
 
 func Test_GetPopularTags(t *testing.T) {
+	log := testSuite()
+
 	type args struct {
 		item model.UserTag
 	}
@@ -360,7 +395,7 @@ func Test_GetPopularTags(t *testing.T) {
 			name: "success",
 			args: args{item: model.UserTag{Username: "Mock username"}},
 			mockDB: func() model.Models {
-				models := model.NewModel(nil)
+				models := model.NewModel(nil, log)
 
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().Query(mock.Anything, mock.Anything).Return(&dynamodb.QueryOutput{Items: []map[string]types.AttributeValue{
@@ -375,7 +410,7 @@ func Test_GetPopularTags(t *testing.T) {
 						"SK":      &types.AttributeValueMemberS{Value: "1"},
 					},
 				}}, nil)
-				models.Tag = model.NewTag(dmock)
+				models.Tag = model.NewTag(dmock, log)
 
 				return models
 			},
@@ -386,7 +421,7 @@ func Test_GetPopularTags(t *testing.T) {
 			name: "Should fail when received error in query call",
 			args: args{item: model.UserTag{Username: "Mock username"}},
 			mockDB: func() model.Models {
-				models := model.NewModel(nil)
+				models := model.NewModel(nil, log)
 
 				dmock := mocks.NewDynamoAPI(t)
 				dmock.EXPECT().Query(mock.Anything, mock.Anything).Return(&dynamodb.QueryOutput{Items: []map[string]types.AttributeValue{
@@ -395,7 +430,7 @@ func Test_GetPopularTags(t *testing.T) {
 					},
 				}}, nil).Once()
 				dmock.EXPECT().Query(mock.Anything, mock.Anything).Return(nil, errors.New("mock error")).Once()
-				models.Tag = model.NewTag(dmock)
+				models.Tag = model.NewTag(dmock, log)
 
 				return models
 			},
