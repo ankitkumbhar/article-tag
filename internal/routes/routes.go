@@ -11,6 +11,9 @@ import (
 func InitRouter(app *handler.Application) *chi.Mux {
 	r := chi.NewRouter()
 
+	// middleware log request
+	r.Use(LogRequest(app))
+
 	// sets a custom message for 404 error status code
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		response.NotFound(w, "requested url is unavailable")
