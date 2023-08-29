@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"go.uber.org/zap"
 )
 
 type UserTagStore interface {
@@ -35,8 +36,8 @@ type Models struct {
 	Tag UserTagStore
 }
 
-func NewModel(db *dynamodb.Client) Models {
+func NewModel(db *dynamodb.Client, logger *zap.Logger) Models {
 	return Models{
-		Tag: NewTag(db),
+		Tag: NewTag(db, logger),
 	}
 }

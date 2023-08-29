@@ -6,10 +6,14 @@ import (
 	"article-tag/internal/model"
 	"article-tag/internal/routes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var app *handler.Application
@@ -22,7 +26,10 @@ func init() {
 		panic(err)
 	}
 
-	models := model.NewModel(db)
+	// initialize logger
+	logger := initLogger()
+
+	models := model.NewModel(db, logger)
 
 	// check and create table
 	err = checkAndCreateTable(&models)
@@ -30,7 +37,34 @@ func init() {
 		panic(err)
 	}
 
-	app = handler.New(db, &models)
+	app = handler.New(db, &models, logger)
+}
+
+func initLogger() *zap.Logger {
+	rawJSON := []byte(`{
+		"level": "debug",
+		"encoding": "json",
+		"outputPaths": ["stdout", "/tmp/logs"],
+		"errorOutputPaths": ["stderr"],
+		"encoderConfig": {
+		  "messageKey": "message",
+		  "levelKey": "level",
+		  "levelEncoder": "lowercase"
+		}
+	  }`)
+
+	var cfg zap.Config
+	if err := json.Unmarshal(rawJSON, &cfg); err != nil {
+		panic(err)
+	}
+
+	// add timestamp in the log
+	cfg.EncoderConfig.TimeKey = "timestamp"
+	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+
+	logger := zap.Must(cfg.Build())
+
+	return logger
 }
 
 // checkAndCreateTable
