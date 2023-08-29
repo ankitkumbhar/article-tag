@@ -60,3 +60,23 @@ func sendResponse(w http.ResponseWriter, b *Body) {
 
 	json.NewEncoder(w).Encode(b)
 }
+
+// NotFound
+func NotFound(w http.ResponseWriter, msg string) {
+	b := Body{
+		Status:  http.StatusNotFound,
+		Message: msg,
+	}
+
+	sendResponse(w, &b)
+}
+
+// NotAllowded
+func NotAllowded(w http.ResponseWriter, msg string) {
+	b := Body{
+		Status:  http.StatusMethodNotAllowed,
+		Message: msg,
+	}
+
+	sendResponse(w, &b)
+}
